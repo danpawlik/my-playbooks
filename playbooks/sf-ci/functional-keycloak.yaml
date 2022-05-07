@@ -1,0 +1,119 @@
+---
+- hosts: install-server
+  vars:
+    add_k1s_hypervisor: true
+    # from <CI LOG>/zuul-info/inventory.yaml
+    buildset_artifacts_url: https://softwarefactory-project.io/logs/87/23287/47/check/sf-rpm-build/a99a353/buildset
+    logclassify_debug: true
+    logclassify_logserver_dir: logs/
+    logclassify_report: true
+    sf_arch: allinone
+    sf_version: master
+    show_hidden_logs: true
+    zuul_use_fetch_output: true
+    # keycloak
+    add_component:
+      - component: keycloak
+        insertafter: gateway
+    unsupported_components:
+      - cauth
+  tasks:
+    # disable ipv6 and others
+    - include: common.yaml
+
+    - name: Configure repository
+      become: true
+      copy:
+        content: |
+          [sfmaster]
+          name=sfmaster
+          baseurl=http://38.102.83.102/kojifiles/repos/sf-master-el7-build/latest/x86_64/
+          gpgkey=
+          gpgcheck=0
+          priority=110
+          exclude=sf-release
+
+          [sftesting]
+          name=sftesting
+          baseurl={{ buildset_artifacts_url }}
+          gpgkey=
+          gpgcheck=0
+          priority=2
+          exclude=sf-release
+        dest: /etc/yum.repos.d/sf-config.repo
+
+    - name: Setup /etc/sf-release file
+      become: true
+      copy:
+        content: "master"
+        dest: /etc/sf-release
+
+    - name: Prepare instance
+      include_role:
+        name: '{{ item }}'
+      loop:
+        - prepare-test-env
+          # - install-ci-repository
+        - check-bubblewrap
+        - install-sfconfig
+        - configure-sfconfig
+
+    - name: Configure hostname and fqdn
+      include_role:
+        name: configure-fqdn
+      vars:
+        domain: sfdomain.com
+
+    - name: Run sfconfig
+      include_role:
+        name: run-sfconfig
+
+    - name: Update hostname and fqdn to sftests.com
+      include_role:
+        name: configure-fqdn
+      vars:
+        domain: sftests.com
+
+    - name: Run sfconfig to update the deployment fqdn
+      include_role:
+        name: run-sfconfig
+      vars:
+        sfconfig_args: --skip-install --provision-demo
+
+    - name: Ensure test tools are installed
+      become: true
+      yum:
+        name:
+          - python3-nose
+          - python3-nose-timer
+          - python3-nose-htmloutput
+
+    - name: Run functional tests and health-check
+      include_role:
+        name: '{{ item }}'
+      loop:
+        # - setup-test-env
+        - run-provisioner
+        - run-backup-create
+        - run-health-check
+        - run-firehose-listener
+        - run-functional-tests
+        - check-firehose-events
+
+    - name: Erase the system
+      include_role:
+        name: run-erase
+
+    - name: Install sfconfig package
+      include_role:
+        name: install-sfconfig
+
+    - name: Restore the backup
+      include_role:
+        name: run-sfconfig
+      vars:
+        sfconfig_args: --recover
+
+#    - name: Validate backup recovery
+#      include_role:
+#        name: run-checker

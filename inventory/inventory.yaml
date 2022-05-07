@@ -1,0 +1,29 @@
+all:
+  children:
+    peers:
+      hosts:
+        elk: null
+    switch:
+      hosts:
+        master: null
+  hosts:
+    elk:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_user: centos
+    master:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_python_interpreter: /usr/bin/python2
+      ansible_user: centos
+      show_hidden_logs: true
+    quay.dev:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_user: centos
+    opensearch.dev:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_user: centos
+  vars:
+    sf_version: master

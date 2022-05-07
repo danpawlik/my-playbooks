@@ -1,0 +1,68 @@
+---
+- hosts: elk
+  become: true
+  vars:
+    fqdn: elasticsearch.sftests.com
+    tenant_configuration:
+      sftests.com:
+        logstash_input_port: 9998
+        kibana_autologin: "basic"
+        retention_time: "14d"
+    validate_certs: false
+    internal_users:
+      - user: "admin"
+        role: "admin"
+        password: "admin"
+      - user: "kibanaserver"
+        role: "kibanauser"
+        password: "kibanaserver"
+    users:
+      - user: "admin"
+        role: "admin"
+        password: "admin"
+        tenant: "sftests.com"
+      - user: "logstash"
+        role: "logstash"
+        password: "logstash"
+        tenant: "sftests.com"
+        input_port: 9998
+      - user: "curator"
+        role: "curator"
+        password: "curator"
+        tenant: "sftests.com"
+      - user: "kibana"
+        role: "readonly"
+        password: "kibana"
+        tenant: "sftests.com"
+        autologin: "basic"
+      - user: "zuul"
+        role: "admin"
+        password: "zuul"
+        tenant: "sftests.com"
+  pre_tasks:
+    - name: Disable ipv6
+      become: true
+      shell: |
+        sysctl -w net.ipv6.conf.all.disable_ipv6=1 ; sysctl -w net.ipv6.conf.default.disable_ipv6=1
+  tasks:
+    - name: Install rsync package
+      become: true
+      package:
+        name: rsync
+        state: present
+
+    - name: Set hostname
+      hostname:
+        name: "{{ fqdn }}"
+
+    - name: Ensure that correct hostname is set in hosts file
+      become: true
+      lineinfile:
+        dest: '/etc/hosts'
+        regexp: "^{{ fqdn }}.+$"
+        line: "{{ ansible_host }} {{ inventory_hostname_short }} {{ fqdn }}"
+
+    - name: Setup ES stack
+      include_role:
+        name: ansible-role-elastic-recheck
+        tasks_from: main.yaml

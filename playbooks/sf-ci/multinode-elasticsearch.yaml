@@ -1,0 +1,175 @@
+---
+- hosts: elk
+  become: true
+  vars:
+    fqdn: elasticsearch.sftests.com
+    tenant_configuration:
+      sftests.com:
+        logstash_input_port: 9998
+        kibana_autologin: "basic"
+    internal_users:
+      - user: "admin"
+        role: "admin"
+        password: "admin"
+      - user: "kibanaserver"
+        role: "kibanauser"
+        password: "kibanaserver"
+    users:
+      - user: "admin"
+        role: "admin"
+        password: "admin"
+        tenant: "sftests.com"
+      - user: "logstash"
+        role: "logstash"
+        password: "logstash"
+        tenant: "sftests.com"
+      - user: "curator"
+        role: "curator"
+        password: "curator"
+        tenant: "sftests.com"
+      - user: "kibana"
+        role: "readonly"
+        password: "kibana"
+        tenant: "sftests.com"
+      - user: "zuul"
+        role: "admin"
+        password: "zuul"
+        tenant: "sftests.com"
+
+  tasks:
+    - name: Install rsync package
+      become: true
+      package:
+        name: rsync
+        state: present
+
+    - name: Set hostname
+      hostname:
+        name: "{{ fqdn }}"
+
+    - name: Ensure that correct hostname is set in hosts file
+      become: true
+      lineinfile:
+        dest: '/etc/hosts'
+        regexp: "^{{ fqdn }}.+$"
+        line: "{{ ansible_host }} {{ inventory_hostname_short }} {{ fqdn }}"
+
+    - name: Setup ES stack
+      include_role:
+        name: ansible-role-elastic-recheck
+        tasks_from: main.yaml
+
+- hosts: master
+  tasks:
+    - set_fact:
+        elk_ip: "{{ hostvars['elk']['ansible_default_ipv4']['address'] }}"
+
+- hosts: elk
+  tasks:
+    - set_fact:
+        master_ip: "{{ hostvars['master']['ansible_default_ipv4']['address'] }}"
+
+- hosts: master
+  vars:
+    add_k1s_hypervisor: true
+    # from <CI LOG>/zuul-info/inventory.yaml
+    buildset_artifacts_url: https://softwarefactory-project.io/logs/87/23287/46/check/sf-rpm-build/e2ac844/buildset
+    logclassify_debug: true
+    logclassify_logserver_dir: logs/
+    logclassify_report: true
+    sf_arch: allinone
+    sf_version: master
+    show_hidden_logs: true
+    zuul_use_fetch_output: true
+  tasks:
+    # disable ipv6 and others
+    - include: common.yaml
+
+    - name: Prepare instance
+      include_role:
+        name: '{{ item }}'
+      loop:
+        #        - prepare-test-env
+        #        - install-ci-repository
+        #        - check-bubblewrap
+        - install-sfconfig
+
+    - name: Configure sfconfig
+      include_role:
+        name: configure-sfconfig
+      vars:
+        sf_arch: allinone
+        static_hostname_ip: '{{ elk_ip }}'
+        static_hostname_fqdn: elasticsearch.sftests.com
+        remove_component:
+          - component: elasticsearch
+          - component: kibana
+          - component: logstash
+
+    - name: Configure external_elasticsearch users
+      include_role:
+        name: configure-external-elasticsearch-host
+      vars:
+        kibana_host_url: "http://elasticsearch.sftests.com:5601"
+        readonly_user_autologin: "basic"
+        elasticsearch_host: "https://elasticsearch.sftests.com:9200"
+        cacert_path: /etc/elasticsearch/certs/localCA.pem
+        suffix: sftests_com
+        users:
+          admin_sftests_com:
+            role: admin
+            password: admin
+          logstash_sftests_com:
+            role: logstash
+            password: logstash
+          curator_sftests_com:
+            role: curator
+            password: curator
+          # Readonly user
+          kibana_sftests_com:
+            role: readonly
+            password: kibana
+          zuul_sftests_com:
+            role: zuul
+            password: zuul
+        elasticsearch_connections:
+          - name: elastic_sftest_com
+            username: zuul_sftests_com
+            password: zuul
+            host: elasticsearch.sftests.com
+            port: 9200
+            use_ssl: true
+            ca_certs: /etc/zuul/ssl/elasticsearch.pem
+            index: "zuul"
+        logstash_host: elasticsearch.sftests.com
+        logstash_port: 9998
+
+    - name: Fetch master CA pem file and elasticsearch certs
+      include_role:
+        name: fetch-ca-pem
+      vars:
+        instance: elk
+        sf_deployment: false
+
+    - name: Run sfconfig
+      include_role:
+        name: run-sfconfig
+      vars:
+        sfconfig_args: --provision-demo --enable-insecure-workers
+
+    - name: Ensure test tools are installed
+      become: true
+      yum:
+        name:
+          - python3-nose
+          - python3-nose-timer
+          - python3-nose-htmloutput
+
+    - name: Run functional tests and health-check
+      include_role:
+        name: '{{ item }}'
+      loop:
+        # - setup-test-env
+        - run-provisioner
+        - run-health-check
+        - run-functional-tests

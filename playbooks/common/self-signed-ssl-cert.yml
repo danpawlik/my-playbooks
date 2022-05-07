@@ -1,0 +1,78 @@
+---
+- name: Create self signed cert
+  hosts: localhost
+  vars:
+    tmp_dir: /tmp/self-signed-ssl
+    common_name: "{{ inventory_hostname }}"
+    country_name: PL
+    organization_name: Test
+    email_address: someemail@emailtest.com
+    state_or_province_name: Wrocalw
+    locality_name: Wroclaw
+  tasks:
+    - name: Install required packages
+      package:
+        name: openssl
+        state: present
+
+    - name: Create temporary self signed cert dir
+      file:
+        path: "{{ tmp_dir }}"
+        state: directory
+
+    # CA
+    - name: Gen CA privkey
+      openssl_privatekey:
+        path: "{{ tmp_dir }}/rootCA.key"
+
+    - name: Generate CA csr
+      openssl_csr:
+        path: "{{ tmp_dir }}/rootCA.csr"
+        privatekey_path: "{{ tmp_dir }}/rootCA.key"
+        common_name: "{{ common_name }}"
+        country_name: "{{ country_name }}"
+        #state_or_province_name: "{{ state_or_province_name }}"
+        #locality_name: "{{ locality_name }}"
+        organization_name: "{{ organization_name }}"
+        email_address: "{{ email_address }}"
+
+    - name: Generate selfsigned CA certificate
+      openssl_certificate:
+        path: "{{ tmp_dir }}/ca_cert.pem"
+        csr_path: "{{ tmp_dir }}/rootCA.csr"
+        privatekey_path: "{{ tmp_dir }}/rootCA.key"
+        provider: selfsigned
+        selfsigned_digest: sha256
+
+    - name: Generate selfsigned CA certificate
+      openssl_certificate:
+        path: "{{ tmp_dir }}/rootCA.crt"
+        csr_path: "{{ tmp_dir }}/rootCA.csr"
+        privatekey_path: "{{ tmp_dir }}/rootCA.key"
+        ownca_path: "{{ tmp_dir }}/ca_cert.pem"
+        ownca_privatekey_path: "{{ tmp_dir }}/rootCA.key"
+        provider: ownca
+        ownca_digest: sha256
+      register: ownca_certificate
+
+    - name: Gen privkey
+      openssl_privatekey:
+        path: "{{ tmp_dir }}/ssl.key"
+
+    - name: Generate Openssl CSR
+      openssl_csr:
+        path: "{{ tmp_dir }}/ssl.csr"
+        privatekey_path: "{{ tmp_dir }}/ssl.key"
+        common_name: "{{ common_name }}"
+        country_name: "{{ country_name }}"
+        organization_name: "{{ organization_name }}"
+        state_or_province_name: "{{ state_or_province_name }}"
+        locality_name: "{{ locality_name }}"
+        email_address: "{{ email_address }}"
+
+    - name: Generate a self signed cert
+      openssl_certificate:
+        path: "{{ tmp_dir }}/ssl.crt"
+        privatekey_path: "{{ tmp_dir }}/ssl.key"
+        csr_path: "{{ tmp_dir }}/ssl.csr"
+        provider: selfsigned

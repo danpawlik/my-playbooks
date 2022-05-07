@@ -1,0 +1,20 @@
+---
+- hosts: install-server
+  vars:
+    # from <CI LOG>/zuul-info/inventory.yaml
+    logclassify_debug: true
+    logclassify_logserver_dir: logs/
+    logclassify_report: true
+    sf_arch: allinone
+    sf_version: master
+    show_hidden_logs: true
+    zuul_use_fetch_output: true
+  tasks:
+    - name: Deploy stable sf instance
+      include_role:
+        name: '{{ item }}'
+      loop:
+        - install-stable-repository
+        - install-sfconfig
+        - configure-sfconfig
+        - run-sfconfig

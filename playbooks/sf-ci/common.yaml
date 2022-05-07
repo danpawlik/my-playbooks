@@ -1,0 +1,11 @@
+---
+- name: Disable ipv6
+  become: true
+  shell: |
+    sysctl -w net.ipv6.conf.all.disable_ipv6=1
+    sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+- name: Fail when buildset_artifacts_url not set
+  fail:
+    msg: "Please set buildset_artifacts_url"
+  when: buildset_artifacts_url == ""

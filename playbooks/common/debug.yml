@@ -1,0 +1,23 @@
+---
+- name: Get host variables
+  hosts: all
+  tasks:
+    - name: Get vars
+      debug:
+        var: vars
+
+    - name: Get environment
+      debug:
+        var: environment
+
+    - name: Get group_names
+      debug:
+        var: group_names
+
+    - name: Get groups
+      debug:
+        var: groups
+
+    - name: Get hostvars
+      debug:
+        var: hostvars

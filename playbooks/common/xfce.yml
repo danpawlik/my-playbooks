@@ -1,0 +1,83 @@
+- name: Install desktop env
+  hosts: quay.dev
+  tasks:
+    - name: Install epel-release
+      become: true
+      yum:
+        name: epel-release
+        state: present
+
+    - name: Enable powertools
+      become: true
+      shell: |
+        dnf config-manager --set-enabled powertools
+
+    - name: Install XFCE group
+      become: true
+      yum:
+        name:
+          - "@Xfce"
+          - tigervnc-server
+        state: present
+
+    - name: Start xfce4-session
+      copy:
+        content: |
+          exec /usr/bin/xfce4-session
+        dest: ~/.xinitrc
+
+    - name: Change default system env to graphical
+      become: true
+      shell: |
+        systemctl set-default graphical
+
+    - name: Create vnc dir
+      file:
+        path: ~/.vnc
+        state: directory
+
+    - name: Setup vnc server password config - vncvnc
+      copy:
+        content: |
+          -_Vi
+        dest: ~/.vnc/passwd
+
+    - name: Configure other params to vnc
+      copy:
+        content: |
+          session=gnome
+          geometry=1920x1200
+          localhost
+          alwaysshared
+        dest: ~/.vnc/config
+
+    - name: Map user root to port 5901
+      become: true
+      copy:
+        content: |
+          :1=root
+        dest: /etc/tigervnc/vncserver.users
+
+    - name: Copy vncserver service - root user
+      become: true
+      copy:
+        src: "/lib/systemd/system/vncserver@.service"
+        dest: "/etc/systemd/system/vncserver@:1.service"
+        remote_src: true
+
+    - name: Change service name params
+      become: true
+      shell: |
+        sed -i 's/<USER>/root/g' /etc/systemd/system/vncserver@:1.service
+
+    - name: Enable vnc server for root user
+      become: true
+      service:
+        name: "vncserver@:1"
+        state: started
+        enabled: true
+        daemon_reload: true
+
+# you can connect like:
+# ssh -L 5902:localhost:5901 myhost -l centos
+# remote-viewer vnc://127.0.0.1:5902

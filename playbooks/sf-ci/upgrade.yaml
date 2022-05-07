@@ -1,0 +1,77 @@
+---
+- hosts: install-server
+  vars:
+    add_k1s_hypervisor: true
+    # from <CI LOG>/zuul-info/inventory.yaml
+    buildset_artifacts_url: https://softwarefactory-project.io/logs/87/23287/46/check/sf-rpm-build/e2ac844/buildset
+    logclassify_debug: true
+    logclassify_logserver_dir: logs/
+    logclassify_report: true
+    sf_arch: allinone
+    sf_version: master
+    show_hidden_logs: true
+    zuul_use_fetch_output: true
+  tasks:
+    # disable ipv6 and others
+    - include: common.yaml
+
+    - name: Prepare instance
+      include_role:
+        name: '{{ item }}'
+      loop:
+        #        - prepare-test-env
+        - install-stable-repository
+
+
+    - name: Ensure test tools are installed
+      become: true
+      yum:
+        name:
+          - python3-nose
+          - python3-nose-timer
+          - python3-nose-htmloutput
+
+    - name: Prepare instance
+      include_role:
+        name: '{{ item }}'
+      loop:
+        - check-bubblewrap
+        - install-sfconfig
+        - configure-sfconfig
+        - configure-fqdn
+
+    - name: Deploy sf and setup test env
+      include_role:
+        name: '{{ item }}'
+      loop:
+        - run-sfconfig
+        - restore-ci-repo
+      vars:
+        sfconfig_args: --provision-demo
+
+    - name: Run provisioner
+      include_role:
+        name: run-provisioner
+
+    - name: Update mirrors to use sfmaster
+      include_role:
+        name: install-ci-repository
+
+    - name: Update sfconfig package
+      include_role:
+        name: install-sfconfig
+
+    - name: Run sfconfig upgrade
+      include_role:
+        name: run-sfconfig
+      vars:
+        sfconfig_args: --upgrade
+
+    - name: Run functional tests and health-check
+      include_role:
+        name: '{{ item }}'
+      loop:
+        - setup-test-env
+#        - run-checker
+        - run-health-check
+        - run-functional-tests

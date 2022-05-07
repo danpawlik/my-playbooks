@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  vars:
+    swap_size: 2048
+    swap_file_path: /swap
+  tasks:
+    - name: Create swap file
+      include_role:
+        name: swap
+        tasks_from: file.yml

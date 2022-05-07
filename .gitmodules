@@ -1,0 +1,15 @@
+[submodule "external_projects/sf-infra"]
+	path = external_projects/sf-infra
+	url = https://softwarefactory-project.io/r/software-factory/sf-infra
+[submodule "external_projects/ansible-role-elastic-recheck"]
+	path = external_projects/ansible-role-elastic-recheck
+	url = https://softwarefactory-project.io/r/software-factory/ansible-role-elastic-recheck
+[submodule "external_projects/python-quay-tool"]
+	path = external_projects/python-quay-tool
+	url = https://softwarefactory-project.io/r/software-factory/python-quay-tool
+[submodule "external_projects/sf-ci"]
+	path = external_projects/sf-ci
+	url = https://softwarefactory-project.io/r/software-factory/sf-ci
+[submodule "external_projects/ci-log-processing"]
+	path = external_projects/ci-log-processing
+	url = https://opendev.org/openstack/ci-log-processing
