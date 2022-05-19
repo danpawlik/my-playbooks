@@ -9,3 +9,10 @@
   fail:
     msg: "Please set buildset_artifacts_url"
   when: buildset_artifacts_url == ""
+
+- name: Update all packages
+  become: true
+  yum:
+    name: '*'
+    state: latest
+  when: update_packages | default(true)

@@ -3,7 +3,7 @@
   vars:
     add_k1s_hypervisor: true
     # from <CI LOG>/zuul-info/inventory.yaml
-    buildset_artifacts_url: https://softwarefactory-project.io/logs/87/23287/46/check/sf-rpm-build/e2ac844/buildset
+    buildset_artifacts_url: ""
     logclassify_debug: true
     logclassify_logserver_dir: logs/
     logclassify_report: true
