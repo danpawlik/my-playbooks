@@ -23,6 +23,14 @@
         clone: true
         update: false
 
+    - name: Clone required projects
+      git:
+        repo: https://opendev.org/opendev/elastic-recheck
+        dest: /home/centos/elastic-recheck
+        version: rdo
+        clone: true
+        update: false
+
     - name: Synchronize required projects
       synchronize:
         src: "{{ playbook_dir }}/../../external_projects/ci-log-processing/"
@@ -34,4 +42,4 @@
           - "--exclude=.git"
 
 - name: Run check services
-  import_playbook: ../../external_projects/ci-log-processing/ansible/playbooks/check-services.yml
+  import_playbook: ../../external_projects/ci-log-processing/ansible/playbooks/check-services-elasticrecheck.yml

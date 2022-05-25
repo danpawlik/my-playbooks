@@ -35,7 +35,6 @@
       include_role:
         name: '{{ item }}'
       loop:
-        - check-bubblewrap
         - install-sfconfig
         - configure-sfconfig
         - configure-fqdn

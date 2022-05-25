@@ -91,7 +91,6 @@
       loop:
         #        - prepare-test-env
         #        - install-ci-repository
-        #        - check-bubblewrap
         - install-sfconfig
 
     - name: Configure sfconfig

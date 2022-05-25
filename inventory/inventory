@@ -10,5 +10,5 @@ managesf ansible_host=localhost ansible_user=centos
 [quay.dev]
 quay.dev ansible_host=localhost ansible_user=centos
 
-[openserch.dev]
+[opensearch.dev]
 openserch.dev ansible_host=localhost ansible_user=centos

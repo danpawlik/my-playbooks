@@ -6,6 +6,14 @@ all:
     switch:
       hosts:
         master: null
+  vars:
+    sf_version: master
+    zuul:
+      projects:
+        opendev.org/opendev/elastic-recheck:
+          src_dir: /home/centos/elastic-recheck
+        opendev.org/openstack/ci-log-processing:
+          src_dir: /home/centos/ci-log-processing
   hosts:
     elk:
       ansible_host: localhost
@@ -25,5 +33,3 @@ all:
       ansible_host: localhost
       ansible_port: 22
       ansible_user: centos
-  vars:
-    sf_version: master
