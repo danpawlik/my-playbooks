@@ -1,0 +1,40 @@
+---
+- name: Deploy Minikube
+  hosts: kind.dev
+  vars:
+    deploy_tools: true
+  tasks:
+    - name: Install required packages
+      become: true
+      package:
+        name:
+          - podman
+          - golang
+        state: present
+
+    - name: Get minikube rpm
+      get_url:
+        url: "https://storage.googleapis.com/minikube/releases/latest/minikube-latest.x86_64.rpm"
+        dest: /tmp/minikube.rpm
+        mode: "0644"
+
+    - name: Install minikube package
+      become: true
+      package:
+        name:
+          - /tmp/minikube.rpm
+        state: present
+
+    - name: Install minikube
+      shell: |
+        minikube start &> ~/minikube-setup.log
+
+    - name: Get minikube cluster credentials
+      shell: |
+        echo 'alias kubectl="minikube kubectl --"' >> ~/.bashrc
+        echo "export PATH=\$PATH:/usr/local/bin" >> ~/.bashrc
+        source ~/.bashrc && kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl
+
+    - name: Download additional tools
+      include_tasks: k8s-tools.yaml
+      when: deploy_tools
