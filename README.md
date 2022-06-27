@@ -20,6 +20,14 @@ Update git submodule (optional):
 git submodule update
 ```
 
+NOTE:
+If you are using Ansible > 2.9, you need to install basic community collections,
+to run playbooks. To do that, please execute:
+
+```shell
+ansible-galaxy install -r requirements.yaml
+```
+
 Run playbook:
 
 ```shell
