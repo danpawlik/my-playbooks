@@ -3,6 +3,8 @@
   hosts: kind.dev
   vars:
     deploy_tools: true
+    kubernetes_version: "v1.24.1"
+    minikube_as_root: true
   tasks:
     - name: Install required packages
       become: true
@@ -10,6 +12,7 @@
         name:
           - podman
           - golang
+          - bash-completion
         state: present
 
     - name: Get minikube rpm
@@ -18,20 +21,35 @@
         dest: /tmp/minikube.rpm
         mode: "0644"
 
+    - name: Download kubectl
+      become: true
+      get_url:
+        url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubernetes_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
     - name: Install minikube package
       become: true
-      package:
+      yum:
         name:
           - /tmp/minikube.rpm
         state: present
+        disable_gpg_check: true
 
     - name: Install minikube
+      become: "{{ minikube_as_root }}"
       shell: |
-        minikube start &> ~/minikube-setup.log
+        minikube start {% if minikube_as_root %}--force{% endif %} &> ~/minikube-setup.log
 
     - name: Get minikube cluster credentials
       shell: |
-        echo 'alias kubectl="minikube kubectl --"' >> ~/.bashrc
+        # echo 'alias kubectl="minikube kubectl --"' >> ~/.bashrc
+        echo "export PATH=\$PATH:/usr/local/bin" >> ~/.bashrc
+        source ~/.bashrc && kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl
+
+    - name: Get minikube cluster credentials
+      become: true
+      shell: |
         echo "export PATH=\$PATH:/usr/local/bin" >> ~/.bashrc
         source ~/.bashrc && kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl
 

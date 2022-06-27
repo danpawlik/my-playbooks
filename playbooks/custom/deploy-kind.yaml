@@ -12,6 +12,7 @@
         name:
           - podman
           - golang
+          - bash-completion
         state: present
 
 #    # Use sf-infra kind role to deploy Kind
@@ -32,10 +33,53 @@
         dest: /usr/local/bin/kubectl
         mode: '0755'
 
+    - name: Create dedicated directory for kind src
+      become: true
+      file:
+        path: "/home/{{ ansible_user }}/src"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Copy config file
+      become: true
+      copy:
+        content: |
+          kind: Cluster
+          apiVersion:  kind.x-k8s.io/v1alpha4
+          networking:
+            apiServerAddress: "{{ ansible_default_ipv4.address }}"
+            apiServerPort: 6443
+          nodes:
+          - role: worker
+            extraMounts:  # Share the host filesystem
+            - hostPath: "/home/{{ ansible_user }}/src"
+              containerPath: /src
+
+          - role: control-plane
+            kubeadmConfigPatches:  # Enable the creation of ingress controller
+            - |
+              kind: InitConfiguration
+              nodeRegistration:
+                kubeletExtraArgs:
+                  node-labels: "ingress-ready=true"
+
+            extraPortMappings:
+            - containerPort: 80
+              hostPort: 80
+            - containerPort: 443
+              hostPort: 443
+        dest: /etc/kind-config.yaml
+        mode: "0644"
+
     - name: Deploy kind
       become: true
       shell: |
-        /usr/local/bin/kind create cluster &> /root/kind-cluster-log
+        /usr/local/bin/kind create cluster --config /etc/kind-config.yaml &> /root/kind-cluster-log
+
+    - name: Setup ingress controller
+      shell: |
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 
     - name: Get kind cluster configuration
       become: true
