@@ -4,6 +4,9 @@ somehost ansible_host=localhost ansible_user=centos
 [elk]
 elk ansible_host=localhost ansible_user=centos
 
+[master]
+managesf ansible_host=localhost ansible_user=centos
+
 [install-server]
 managesf ansible_host=localhost ansible_user=centos
 

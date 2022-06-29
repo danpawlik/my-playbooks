@@ -16,3 +16,6 @@
     name: '*'
     state: latest
   when: update_packages | default(true)
+
+- name: Include all vars
+  include_vars: group_vars/all

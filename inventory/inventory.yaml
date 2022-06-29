@@ -25,6 +25,12 @@ all:
       ansible_python_interpreter: /usr/bin/python2
       ansible_user: centos
       show_hidden_logs: true
+    install-server:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_python_interpreter: /usr/bin/python2
+      ansible_user: centos
+      show_hidden_logs: true
     quay.dev:
       ansible_host: localhost
       ansible_port: 22
