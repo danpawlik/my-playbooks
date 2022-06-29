@@ -37,6 +37,11 @@
         tenant: "sftests.com"
 
   tasks:
+    # disable ipv6 and others
+    - include: common.yaml
+      vars:
+        sf_install: false
+
     - name: Install rsync package
       become: true
       package:
@@ -58,6 +63,10 @@
       include_role:
         name: ansible-role-elastic-recheck
         tasks_from: main.yaml
+
+    - name: Run functional tests
+      include_role:
+        name: run-opensearch-tox
 
 - hosts: master
   tasks:

@@ -11,6 +11,7 @@
     sf_version: master
     show_hidden_logs: true
     zuul_use_fetch_output: true
+    sf_install: false
   tasks:
     # disable ipv6 and others
     - include: common.yaml

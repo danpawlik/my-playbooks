@@ -5,11 +5,6 @@
     sysctl -w net.ipv6.conf.all.disable_ipv6=1
     sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-- name: Fail when buildset_artifacts_url not set
-  fail:
-    msg: "Please set buildset_artifacts_url"
-  when: buildset_artifacts_url == ""
-
 - name: Update all packages
   become: true
   yum:
@@ -17,5 +12,82 @@
     state: latest
   when: update_packages | default(true)
 
+- name: Install base packages
+  become: true
+  yum:
+    name:
+      - git
+      - rsync
+    state: present
+
 - name: Include all vars
   include_vars: group_vars/all
+
+- name: Configure SF
+  block:
+    - name: Fail when buildset_artifacts_url not set
+      fail:
+        msg: "Please set buildset_artifacts_url"
+      when: buildset_artifacts_url == ""
+
+    - name: Configure repository
+      become: true
+      copy:
+        content: |
+          [sfmaster]
+          name=sfmaster
+          baseurl=http://38.102.83.102/kojifiles/repos/sf-master-el7-build/latest/x86_64/
+          gpgkey=
+          gpgcheck=0
+          priority=110
+          exclude=sf-release
+
+          [sftesting]
+          name=sftesting
+          baseurl={{ buildset_artifacts_url }}
+          gpgkey=
+          gpgcheck=0
+          priority=2
+          exclude=sf-release
+        dest: /etc/yum.repos.d/sf-config.repo
+
+    - name: Setup /etc/sf-release file
+      become: true
+      copy:
+        content: "master"
+        dest: /etc/sf-release
+  when: sf_install | default(true)
+
+- name: Clone required projects
+  git:
+    repo: https://softwarefactory-projects.io/r/sf-ci
+    dest: /home/centos/sf-ci
+    clone: true
+    update: false
+
+- name: Clone required projects
+  git:
+    repo: https://softwarefactory-projects.io/r/ansible-role-elastic-recheck
+    dest: /home/centos/ansible-role-elastic-recheck
+    clone: true
+    update: false
+
+- name: Synchronize required projects
+  synchronize:
+    src: "{{ playbook_dir }}/../../external_projects/ansible-role-elastic-recheck/"
+    dest: "/home/centos/ansible-role-elastic-recheck/"
+    recursive: true
+    archive: true
+    rsync_opts:
+      - "--no-motd"
+      - "--exclude=.git"
+
+- name: Synchronize required projects
+  synchronize:
+    src: "{{ playbook_dir }}/../../external_projects/sf-ci/"
+    dest: "/home/centos/sf-ci/"
+    recursive: true
+    archive: true
+    rsync_opts:
+      - "--no-motd"
+      - "--exclude=.git"

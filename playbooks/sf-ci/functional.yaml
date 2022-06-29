@@ -15,33 +15,6 @@
     # disable ipv6
     - include: common.yaml
 
-    - name: Configure repository
-      become: true
-      copy:
-        content: |
-          [sfmaster]
-          name=sfmaster
-          baseurl=http://38.102.83.102/kojifiles/repos/sf-master-el7-build/latest/x86_64/
-          gpgkey=
-          gpgcheck=0
-          priority=110
-          exclude=sf-release
-
-          [sftesting]
-          name=sftesting
-          baseurl={{ buildset_artifacts_url }}
-          gpgkey=
-          gpgcheck=0
-          priority=2
-          exclude=sf-release
-        dest: /etc/yum.repos.d/sf-config.repo
-
-    - name: Setup /etc/sf-release file
-      become: true
-      copy:
-        content: "master"
-        dest: /etc/sf-release
-
     - name: Prepare instance
       include_role:
         name: '{{ item }}'
