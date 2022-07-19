@@ -13,3 +13,6 @@
 [submodule "external_projects/ci-log-processing"]
 	path = external_projects/ci-log-processing
 	url = https://opendev.org/openstack/ci-log-processing
+[submodule "external_projects/sf-config"]
+	path = external_projects/sf-config
+	url = https://softwarefactory-project.io/r/software-factory/sf-config

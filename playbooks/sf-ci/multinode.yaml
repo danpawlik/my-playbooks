@@ -1,5 +1,5 @@
 ---
-- hosts: master,elk
+- hosts: master,tenant,zs,ze
   tasks:
     # disable ipv6 and others
     - include: common.yaml
@@ -7,4 +7,4 @@
         sf_install: false
 
 - name: Run check services
-  import_playbook: ../../external_projects/sf-ci/playbooks/multinode-elasticsearch.yaml
+  import_playbook: ../../external_projects/sf-ci/playbooks/multinode.yaml

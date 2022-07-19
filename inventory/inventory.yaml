@@ -12,11 +12,11 @@ all:
       branch: master
       projects:
         opendev.org/opendev/elastic-recheck:
-          src_dir: /home/centos/elastic-recheck
+          src_dir: "/home/centos/elastic-recheck"
         opendev.org/openstack/ci-log-processing:
-          src_dir: /home/centos/ci-log-processing
+          src_dir: "/home/centos/ci-log-processing"
         softwarefactory-project.io/software-factory/ansible-role-elastic-recheck:
-          src_dir: /home/centos/ansible/role-elastic-recheck
+          src_dir: "/home/centos/ansible-role-elastic-recheck"
         softwarefactory-project.io/software-factory/sf-ci:
           name: software-factory/sf-ci
           short_name: sf-ci
@@ -35,6 +35,18 @@ all:
       ansible_port: 22
       ansible_user: centos
     master:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_python_interpreter: /usr/bin/python2
+      ansible_user: centos
+      show_hidden_logs: true
+    zs:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_python_interpreter: /usr/bin/python2
+      ansible_user: centos
+      show_hidden_logs: true
+    ze:
       ansible_host: localhost
       ansible_port: 22
       ansible_python_interpreter: /usr/bin/python2

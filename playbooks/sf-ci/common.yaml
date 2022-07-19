@@ -60,14 +60,14 @@
 
 - name: Clone required projects
   git:
-    repo: https://softwarefactory-projects.io/r/sf-ci
+    repo: https://softwarefactory-project.io/r/software-factory/sf-ci
     dest: /home/centos/sf-ci
     clone: true
     update: false
 
 - name: Clone required projects
   git:
-    repo: https://softwarefactory-projects.io/r/ansible-role-elastic-recheck
+    repo: https://softwarefactory-project.io/r/software-factory/ansible-role-elastic-recheck
     dest: /home/centos/ansible-role-elastic-recheck
     clone: true
     update: false
