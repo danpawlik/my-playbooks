@@ -2,6 +2,8 @@
 - hosts: elk
   become: true
   vars:
+    # NOTE: the hide_sensitive_logs is set to false in Zuul CI jobs.
+    hide_sensitive_logs: false
     fqdn: elasticsearch.sftests.com
     tenant_configuration:
       sftests.com:
@@ -42,11 +44,7 @@
       vars:
         sf_install: false
 
-    - name: Install rsync package
-      become: true
-      package:
-        name: rsync
-        state: present
+    - include: copy_ssh.yml
 
     - name: Set hostname
       hostname:
@@ -70,11 +68,47 @@
 
 - hosts: master
   tasks:
+    # copy ssh from elk to authorized_keys
+    - name: Read ssh key
+      delegate_to: elk
+      become: true
+      shell: |
+        cat /root/.ssh/id_ed25519.pub
+      register: _host_ssh_pub
+
+    - name: Add ssh pub key access
+      become: true
+      lineinfile:
+        path: "{{ item }}"
+        line: "{{ _host_ssh_pub.stdout }}"
+      loop:
+        - /root/.ssh/authorized_keys
+        - /home/centos/.ssh/authorized_keys
+
+    - include: copy_ssh.yml
+      become: true
+
     - set_fact:
         elk_ip: "{{ hostvars['elk']['ansible_default_ipv4']['address'] }}"
 
 - hosts: elk
   tasks:
+    - name: Read ssh key
+      delegate_to: master
+      become: true
+      shell: |
+        cat /root/.ssh/id_ed25519.pub
+      register: _host_ssh_pub
+
+    - name: Add ssh pub key access
+      become: true
+      lineinfile:
+        path: "{{ item }}"
+        line: "{{ _host_ssh_pub.stdout }}"
+      loop:
+        - /root/.ssh/authorized_keys
+        - /home/centos/.ssh/authorized_keys
+
     - set_fact:
         master_ip: "{{ hostvars['master']['ansible_default_ipv4']['address'] }}"
 
