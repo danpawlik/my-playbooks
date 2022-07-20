@@ -2,10 +2,11 @@
 - hosts: elk
   become: true
   vars:
-    fqdn: elasticsearch.sftests.com
+    # NOTE: the hide_sensitive_logs is set to false in Zuul CI jobs.
+    hide_sensitive_logs: false
+    fqdn: opensearch.sftests.com
     tenant_configuration:
       sftests.com:
-        logstash_input_port: 9998
         kibana_autologin: "basic"
     internal_users:
       - user: "admin"
@@ -23,30 +24,24 @@
         role: "logstash"
         password: "logstash"
         tenant: "sftests.com"
-      - user: "curator"
-        role: "curator"
-        password: "curator"
-        tenant: "sftests.com"
       - user: "kibana"
         role: "readonly"
         password: "kibana"
         tenant: "sftests.com"
+        # NOTE: remove after merging:
+        # https://softwarefactory-project.io/r/c/software-factory/ansible-role-elastic-recheck/+/22512
+        autologin: "basic"
       - user: "zuul"
         role: "admin"
         password: "zuul"
         tenant: "sftests.com"
-
   tasks:
     # disable ipv6 and others
     - include: common.yaml
       vars:
         sf_install: false
 
-    - name: Install rsync package
-      become: true
-      package:
-        name: rsync
-        state: present
+    - include: copy_ssh.yml
 
     - name: Set hostname
       hostname:
@@ -57,24 +52,54 @@
       lineinfile:
         dest: '/etc/hosts'
         regexp: "^{{ fqdn }}.+$"
-        line: "{{ ansible_host }} {{ inventory_hostname_short }} {{ fqdn }}"
+        line: "{{ ansible_host }} {{ inventory_hostname_short }} {{ fqdn }} elasticsearch.sftests.com elasticsearch"
 
     - name: Setup ES stack
       include_role:
         name: ansible-role-elastic-recheck
         tasks_from: main.yaml
 
-    - name: Run functional tests
-      include_role:
-        name: run-opensearch-tox
+          #    - name: Run functional tests
+          #      include_role:
+          #        name: run-opensearch-tox
+          #
 
 - hosts: master
   tasks:
+    - name: Read ssh key
+      delegate_to: elk
+      become: true
+      shell: |
+        cat /root/.ssh/id_ed25519.pub
+      register: _host_ssh_pub
+
+    - name: Add ssh pub key access
+      become: true
+      lineinfile:
+        path: /root/.ssh/authorized_keys
+        line: "{{ _host_ssh_pub.stdout }}"
+
+    - include: copy_ssh.yml
+      become: true
+
     - set_fact:
         elk_ip: "{{ hostvars['elk']['ansible_default_ipv4']['address'] }}"
 
 - hosts: elk
   tasks:
+    - name: Read ssh key
+      delegate_to: master
+      become: true
+      shell: |
+        cat /root/.ssh/id_ed25519.pub
+      register: _host_ssh_pub
+
+    - name: Add ssh pub key access
+      become: true
+      lineinfile:
+        path: /root/.ssh/authorized_keys
+        line: "{{ _host_ssh_pub.stdout }}"
+
     - set_fact:
         master_ip: "{{ hostvars['master']['ansible_default_ipv4']['address'] }}"
 
@@ -108,20 +133,24 @@
       vars:
         sf_arch: allinone
         static_hostname_ip: '{{ elk_ip }}'
-        static_hostname_fqdn: elasticsearch.sftests.com
+        # FIXME: Change line after renaming elasticsearch to opensearch
+        static_hostname_fqdn: "opensearch.sftests.com elasticsearch.sftests.com"
         remove_component:
+          # FIXME: change to opensearch when 25354 is merged.
           - component: elasticsearch
           - component: kibana
           - component: logstash
 
-    - name: Configure external_elasticsearch users
+    - name: Configure external_opensearch users
       include_role:
         name: configure-external-elasticsearch-host
       vars:
-        kibana_host_url: "http://elasticsearch.sftests.com:5601"
+        kibana_host_url: "http://opensearch.sftests.com:5601"
         readonly_user_autologin: "basic"
-        elasticsearch_host: "https://elasticsearch.sftests.com:9200"
-        cacert_path: /etc/elasticsearch/certs/localCA.pem
+        # FIXME: Change line after renaming elasticsearch to opensearh
+        elasticsearch_host: opensearch.sftests.com
+        opensearch_host: opensearch.sftests.com
+        cacert_path: /etc/pki/ca-trust/source/anchors/opensearch.pem
         suffix: sftests_com
         users:
           admin_sftests_com:
@@ -130,9 +159,6 @@
           logstash_sftests_com:
             role: logstash
             password: logstash
-          curator_sftests_com:
-            role: curator
-            password: curator
           # Readonly user
           kibana_sftests_com:
             role: readonly
@@ -140,14 +166,24 @@
           zuul_sftests_com:
             role: zuul
             password: zuul
-        elasticsearch_connections:
-          - name: elastic_sftest_com
+        opensearch_connections:
+          - name: opensearch_sftest_com
             username: zuul_sftests_com
             password: zuul
-            host: elasticsearch.sftests.com
+            host: opensearch.sftests.com
             port: 9200
             use_ssl: true
-            ca_certs: /etc/zuul/ssl/elasticsearch.pem
+            ca_certs: /etc/zuul/ssl/opensearch.pem
+            index: "zuul"
+        # FIXME: change Change line after renaming elasticsearch to opensearch
+        elasticsearch_connections:
+          - name: opensearch_sftest_com
+            username: zuul_sftests_com
+            password: zuul
+            host: opensearch.sftests.com
+            port: 9200
+            use_ssl: true
+            ca_certs: /etc/zuul/ssl/opensearch.pem
             index: "zuul"
         logstash_host: elasticsearch.sftests.com
         logstash_port: 9998

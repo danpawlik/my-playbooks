@@ -1,0 +1,25 @@
+---
+- name: Generate ssh key when not available
+  block:
+    - name: Generate SSH key
+      openssh_keypair:
+        path: /home/centos/.ssh/id_ed25519
+        type: ed25519
+
+    - name: Change permission to centos
+      file:
+        path: /home/centos/.ssh
+        owner: centos
+        group: centos
+
+    - name: Copy generated key to the root ssh
+      copy:
+        remote_src: true
+        src: "/home/centos/.ssh/{{ item }}"
+        dest: "/root/.ssh/{{ item }}"
+        owner: root
+        group: root
+        mode: 0600
+      loop:
+        - id_ed25519
+        - id_ed25519.pub
