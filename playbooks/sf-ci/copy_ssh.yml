@@ -6,6 +6,18 @@
         path: /home/centos/.ssh/id_ed25519
         type: ed25519
 
+    - name: Copy generated key to the root ssh
+      copy:
+        remote_src: true
+        src: "/home/centos/.ssh/{{ item }}"
+        dest: "/root/.ssh/{{ item }}"
+        owner: root
+        group: root
+        mode: "0600"
+      loop:
+        - id_ed25519
+        - id_ed25519.pub
+
     - name: Change permission to centos
       file:
         path: /home/centos/.ssh
@@ -13,16 +25,9 @@
         group: centos
         recurse: true
 
-    - name: Copy generated key to the root ssh
-      copy:
-        remote_src: true
-        src: "/home/centos/.ssh/{{ item.name }}"
-        dest: "/root/.ssh/{{ item.name }}"
+    - name: Change permission to root
+      file:
+        path: /root/.ssh
         owner: root
         group: root
-        mode: "{{ item.mode }}"
-      loop:
-        - name: id_ed25519
-          mode: 0600
-        - name: id_ed25519.pub
-          mode: 0644
+        recurse: true

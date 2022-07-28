@@ -13,12 +13,34 @@
       nameserver 8.8.8.8
     dest: /etc/resolv.conf
 
+- name: Gather package facts
+  package_facts:
+    manager: auto
+
+- name: Setup fastes mirror when available
+  become: true
+  copy:
+    content: |
+      [main]
+      socket_timeout = 3
+      enabled = 1
+      hostfilepath = /var/cache/yum/timedhosts.txt
+      maxhostfileage = 1
+      always_print_best_host = true
+      maxhostfileage=10
+      maxthreads=16
+      minrate=5M
+      exclude=.wcss.pl,.wielun.net
+    dest: /etc/yum/pluginconf.d/fastestmirror.conf
+  when: "'yum-plugin-fastestmirror' in ansible_facts.packages"
+
 - name: Do Centos repository workaround
   become: true
   shell: |
     sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/Cent*.repo
     #sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/Cent*.repo
     sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://mirror.regionone.vexxhost.rdoproject.org|g' /etc/yum.repos.d/Cent*.repo
+  when: "'yum-plugin-fastestmirror' not in ansible_facts.packages"
 
 - name: Cleanup cache
   become: true
