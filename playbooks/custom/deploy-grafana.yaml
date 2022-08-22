@@ -1,0 +1,69 @@
+---
+- name: Deploy Prometheus with Grafana
+  hosts: monitoring.dev
+  vars:
+    password: admin
+    user: admin
+    prometheus_public_url: http://monitoring.dev:9090
+    grafana_server_root_url: http://monitoring.dev/
+  tasks:
+    - name: Install required packages
+      become: true
+      package:
+        name:
+          - podman
+          - vim
+          # on Centos 7 it is python3-passlib
+          - mod_ssl
+        state: present
+
+    - name: Create directory for Prometheus
+      become: true
+      file:
+        path: /etc/prometheus
+        state: directory
+
+#    - name: Create basic auth file
+#      become: true
+#      copy:
+#        # password is: admin
+#        content: "basic_auth_users:\n  admin:{{ password | password_hash('bcrypt') }}"
+#        dest: /etc/prometheus/web.yaml
+
+    - name: Create prometheus config file
+      become: true
+      copy:
+        content: |
+          global:
+            scrape_interval: 5s
+
+          scrape_configs:
+            - job_name: prometheus
+              static_configs:
+              - targets:
+                - localhost:9090
+
+              basic_auth:
+                username: {{ user }}
+                password: {{ password }}
+
+            - job_name: api
+              static_configs:
+              - targets:
+                - api:9090
+
+        dest: /etc/prometheus/prometheus.yaml
+
+    - name: Deploy Prometheus
+      become: true
+      shell: >-
+        podman run -d -p 9090:9090 --name prometheus --network host
+        -v /etc/prometheus/web.yaml:/etc/prometheus/web.yaml:z
+        -v /etc/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:z
+        quay.io/prometheus/prometheus:latest
+        --web.config.file=/etc/prometheus/web.yaml --web.enable-admin-api
+        --config.file=/etc/prometheus/prometheus.yaml
+
+    - name: Deploy Grafana
+      import_role:
+        name: grafana
