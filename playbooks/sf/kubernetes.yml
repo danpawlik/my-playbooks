@@ -1,0 +1,15 @@
+---
+- name: Deploy Kubernetes Cluster
+  hosts: kubernetes.dev
+  vars:
+    fqdn: kubernetes.sftests.com
+  pre_tasks:
+    - name: Disable ipv6
+      become: true
+      shell: |
+        sysctl -w net.ipv6.conf.all.disable_ipv6=1 ; sysctl -w net.ipv6.conf.default.disable_ipv6=1
+  tasks:
+    - name: Setup Kubernetes
+      include_role:
+        name: kubernetes
+        tasks_from: main.yaml

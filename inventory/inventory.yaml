@@ -58,3 +58,7 @@ all:
       ansible_host: localhost
       ansible_port: 22
       ansible_user: centos
+    kubernetes.dev:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_user: centos
