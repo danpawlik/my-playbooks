@@ -62,3 +62,7 @@ all:
       ansible_host: localhost
       ansible_port: 22
       ansible_user: centos
+    crc.dev:
+      ansible_host: localhost
+      ansible_port: 22
+      ansible_user: centos

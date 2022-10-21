@@ -1,0 +1,10 @@
+---
+- name: Deploy Kubernetes
+  hosts: kubernetes.dev
+  vars:
+    deploy_tools: true
+  roles:
+    - extra/kubernetes
+  post_tasks:
+    - include: k8s-tools.yaml
+      when: deploy_tools

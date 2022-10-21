@@ -1,0 +1,24 @@
+---
+- name: Deploy Prometheus with Grafana
+  hosts: monitoring.dev
+  vars:
+    password: admin
+    user: admin
+    prometheus_public_url: http://monitoring.dev:9090
+    grafana_server_root_url: http://monitoring.dev/
+  tasks:
+    - name: Install required packages
+      become: true
+      package:
+        name:
+          - podman
+          - vim
+          # on Centos 7 it is python3-passlib
+          - mod_ssl
+        state: present
+
+    - import_playbook: deploy-prometheus.yaml
+
+    - name: Deploy node exporter
+      import_role:
+        name: service/node-exporter

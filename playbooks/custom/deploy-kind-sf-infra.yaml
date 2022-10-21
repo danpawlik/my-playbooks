@@ -1,0 +1,16 @@
+---
+- name: Deploy Kind
+  hosts: kind.dev
+  tasks:
+    - name: Install required packages
+      become: true
+      package:
+        name:
+          - podman
+          - golang
+          - bash-completion
+        state: present
+
+    # Use sf-infra kind role to deploy Kind
+    - include_role:
+        name: extra/kind

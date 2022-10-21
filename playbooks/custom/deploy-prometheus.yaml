@@ -1,11 +1,10 @@
 ---
-- name: Deploy Prometheus with Grafana
+- name: Deploy Prometheus
   hosts: monitoring.dev
   vars:
-    password: admin
-    user: admin
+    password: ''
+    user: ''
     prometheus_public_url: http://monitoring.dev:9090
-    grafana_server_root_url: http://monitoring.dev/
   tasks:
     - name: Install required packages
       become: true
@@ -23,12 +22,33 @@
         path: /etc/prometheus
         state: directory
 
-#    - name: Create basic auth file
-#      become: true
-#      copy:
-#        # password is: admin
-#        content: "basic_auth_users:\n  admin:{{ password | password_hash('bcrypt') }}"
-#        dest: /etc/prometheus/web.yaml
+    - name: Create basic auth file
+      become: true
+      copy:
+        # password is: admin
+        content: "basic_auth_users:\n  admin:{{ password | password_hash('bcrypt') }}"
+        dest: /etc/prometheus/web.yaml
+      when: "password != '' and user != ''"
+
+    - name: Create prometheus config file
+      become: true
+      copy:
+        content: |
+          global:
+            scrape_interval: 5s
+
+          scrape_configs:
+            - job_name: prometheus
+              static_configs:
+              - targets:
+                - localhost:9090
+
+            - job_name: api
+              static_configs:
+              - targets:
+                - api:9090
+        dest: /etc/prometheus/prometheus.yaml
+      when: password == '' and user == ''
 
     - name: Create prometheus config file
       become: true
@@ -51,19 +71,16 @@
               static_configs:
               - targets:
                 - api:9090
-
         dest: /etc/prometheus/prometheus.yaml
+      when: password != '' and user != ''
 
     - name: Deploy Prometheus
       become: true
       shell: >-
         podman run -d -p 9090:9090 --name prometheus --network host
-        -v /etc/prometheus/web.yaml:/etc/prometheus/web.yaml:z
+        {% if password != '' and user != '' %}-v /etc/prometheus/web.yaml:/etc/prometheus/web.yaml:z{% endif %}
         -v /etc/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:z
         quay.io/prometheus/prometheus:latest
-        --web.config.file=/etc/prometheus/web.yaml --web.enable-admin-api
+        {% if password != '' and user != '' %}--web.config.file=/etc/prometheus/web.yaml{% endif %}
+        --web.enable-admin-api
         --config.file=/etc/prometheus/prometheus.yaml
-
-    - name: Deploy Grafana
-      import_role:
-        name: sf/grafana

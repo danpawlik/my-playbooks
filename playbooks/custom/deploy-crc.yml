@@ -1,0 +1,36 @@
+---
+# This playbook deploy crc and prepare VM to make a snapshot, that later
+# can be deployed in CI.
+- hosts: crc.dev
+  pre_tasks:
+    - name: Update packages
+      become: true
+      package:
+        name: '*'
+        state: latest
+  roles:
+    - extra/crc
+  post_tasks:
+    - name: Remove pull-secret file
+      file:
+        path: pull-secret.txt
+        state: absent
+    - name: Ensure cloud-init is installed
+      become: true
+      package:
+        name: cloud-init
+        state: present
+    - name: Cleanup dnf cache
+      become: true
+      shell: dnf clean all
+    # dpawlik: for some reason, ssh local keys in /etc/ssh/ are not generated during start.
+    - name: Create crontab entry to generate local ssh keys
+      become: true
+      copy:
+        content: |
+          @reboot root /usr/bin/ssh-keygen -A; systemctl start sshd
+        dest: /etc/cron.d/ssh_gen
+    - name: Set proper selinux label
+      become: true
+      shell: |
+        /usr/bin/chcon system_u:object_r:system_cron_spool_t:s0 /etc/cron.d/ssh_gen

@@ -15,10 +15,6 @@
           - bash-completion
         state: present
 
-#    # Use sf-infra kind role to deploy Kind
-#    - include_role:
-#        name: kind
-
     - name: Download kind
       become: true
       get_url:
