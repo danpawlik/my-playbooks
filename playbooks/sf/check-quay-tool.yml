@@ -32,7 +32,7 @@
     podman_parameters: "--tls-verify=false "
 
     container_images:
-      quay: quay.io/projectquay/quay:v3.6.2
+      quay: quay.io/projectquay/quay:v3.7.10
       postgresql: docker.io/postgres:alpine3.14
       clair: quay.io/projectquay/clair:4.3.5
       redis: docker.io/redis:6.2.4
@@ -48,7 +48,7 @@
       when: zuul is not defined
 
     - include_role:
-        name: "{{ zuul.projects['softwarefactory-project.io/software-factory/sf-infra'].src_dir }}/roles/hostname"
+        name: "{{ zuul.projects['softwarefactory-project.io/software-factory/sf-infra'].src_dir }}/roles/sf/hostname"
         tasks_from: main.yml
       when: zuul is defined
 

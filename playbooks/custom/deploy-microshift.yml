@@ -1,0 +1,34 @@
+---
+# This playbook deploy crc and prepare VM to make a snapshot, that later
+# can be deployed in CI.
+- hosts: microshift.dev
+  vars:
+    fqdn: microshift.dev
+    setup_olm: false
+    openshift_pull_secret: |
+      {pull-secret.txt}
+    use_copr_microshift: false
+  pre_tasks:
+    - name: Update packages
+      become: true
+      package:
+        name: '*'
+        state: latest
+
+    - name: Install packages
+      become: true
+      yum:
+        name:
+          - make
+          - git
+          - vim
+          - golang
+          - tar
+          - ansible-core
+          - skopeo
+          - sqlite
+          - jq
+          - podman
+        state: present
+  roles:
+    - extra/microshift

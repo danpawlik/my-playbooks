@@ -1,11 +1,4 @@
 all:
-  children:
-    peers:
-      hosts:
-        elk: null
-    switch:
-      hosts:
-        master: null
   vars:
     sf_version: master
     zuul:
@@ -29,40 +22,12 @@ all:
           name: software-factory/sfinfo
           short_name: sfinfo
           src_dir: /home/centos/sfinfo
+        softwarefactory-project.io/software-factory/sf-infra:
+          name: software-factory/sf-infra
+          short_name: sf-infra
+          src_dir: /home/centos/sf-infra
   hosts:
-    elk:
-      ansible_host: localhost
+    microshift.dev:
       ansible_port: 22
-      ansible_user: centos
-    master:
-      ansible_host: localhost
-      ansible_port: 22
-      ansible_python_interpreter: /usr/bin/python2
-      ansible_user: centos
-      show_hidden_logs: true
-    install-server:
-      ansible_host: localhost
-      ansible_port: 22
-      ansible_python_interpreter: /usr/bin/python2
-      ansible_user: centos
-      show_hidden_logs: true
-    quay.dev:
-      ansible_host: localhost
-      ansible_port: 22
-      ansible_user: centos
-    opensearch.dev:
-      ansible_host: localhost
-      ansible_port: 22
-      ansible_user: centos
-    kind.dev:
-      ansible_host: localhost
-      ansible_port: 22
-      ansible_user: centos
-    kubernetes.dev:
-      ansible_host: localhost
-      ansible_port: 22
-      ansible_user: centos
-    crc.dev:
-      ansible_host: localhost
-      ansible_port: 22
+      ansible_host: 192.168.122.202
       ansible_user: centos

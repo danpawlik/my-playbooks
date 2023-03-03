@@ -1,0 +1,57 @@
+---
+- name: Run sf-operator
+  hosts: microshift.dev
+  vars:
+    operator_dir: ~/sf-operator
+    git_command: ""
+  tasks:
+    - name: Clone dir
+      git:
+        repo: https://softwarefactory-project.io/r/software-factory/sf-operator
+        dest: "{{ operator_dir }}"
+
+    - name: Checkout on patch or cherry-pick etc
+      shell: |
+        {{ git_command }}
+      args:
+        chdir: "{{ operator_dir }}"
+      when: git_command != ''
+
+    - name: Install requires go packages
+      shell: |
+        make install
+      args:
+        chdir: "{{ operator_dir }}"
+
+    - name: Get namespace
+      shell: |
+        /usr/local/bin/kubectl config view -o jsonpath='{.contexts[].context.namespace}'
+      register: _ns
+
+    - name: Change namespace
+      shell: |
+        sed -i "s/fqdn: \"sftests.com\"/fqdn: \"{{ _ns.stdout }}.sftests.com\"/g" config/samples/sf_v1_softwarefactory.yaml
+      args:
+        chdir: "{{ operator_dir }}"
+
+    - name: Enable all services
+      shell: |
+        sed -i 's/false/true/g' config/samples/sf_v1_softwarefactory.yaml
+      args:
+        chdir: "{{ operator_dir }}"
+
+    - name: Change storageclass
+      shell: |
+        find {{ operator_dir }} -type f -exec sed -i 's/standard/manual/g' {} \;
+
+    - name: Apply custom resources
+      shell: |
+        /usr/local/bin/kubectl apply -f config/samples/
+      args:
+        chdir: "{{ operator_dir }}"
+
+    - name: Run operator deployment
+      shell: |
+        go run ./main.go --namespace {{ _ns.stdout }}
+      args:
+        chdir: "{{ operator_dir }}"
