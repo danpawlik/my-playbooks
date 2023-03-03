@@ -4,8 +4,6 @@
 - hosts: crc.dev
   vars:
     crc_debug: true
-    opeshift_pull_secret: |
-      {pull-secret.txt}
   pre_tasks:
     - name: Update packages
       become: true

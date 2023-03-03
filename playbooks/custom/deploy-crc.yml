@@ -5,8 +5,6 @@
   vars:
     crc_debug: true
     nested_virtualization: true
-    openshift_pull_secret: |
-      {pull-secret.txt}
   pre_tasks:
     - name: Update packages
       become: true

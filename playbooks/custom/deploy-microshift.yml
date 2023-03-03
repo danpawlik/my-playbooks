@@ -5,8 +5,6 @@
   vars:
     fqdn: microshift.dev
     setup_olm: false
-    openshift_pull_secret: |
-      {pull-secret.txt}
     use_copr_microshift: false
   pre_tasks:
     - name: Update packages
