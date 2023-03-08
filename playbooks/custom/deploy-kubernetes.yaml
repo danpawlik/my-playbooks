@@ -8,6 +8,14 @@
   post_tasks:
     - include: k8s-tools.yaml
       when: deploy_tools
+    - name: Copy kubeconfig
+      become: true
+      copy:
+        src: /root/.kube
+        dest: "~{{ ansible_user }}/"
+        remote_src: true
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
   pre_tasks:
     - name: Update packages
       become: true
