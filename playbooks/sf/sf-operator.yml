@@ -1,14 +1,17 @@
 ---
 - name: Run sf-operator
-  hosts: microshift.dev
+  hosts: microshift.dev,kubernetes.dev,crc.dev
   vars:
     operator_dir: ~/sf-operator
     git_command: ""
+    namespace: default
+    storageclass: standard
   tasks:
     - name: Clone dir
       git:
         repo: https://softwarefactory-project.io/r/software-factory/sf-operator
         dest: "{{ operator_dir }}"
+      ignore_errors: true
 
     - name: Checkout on patch or cherry-pick etc
       shell: |
@@ -27,10 +30,16 @@
       shell: |
         /usr/local/bin/kubectl config view -o jsonpath='{.contexts[].context.namespace}'
       register: _ns
+      when: namespace is not defined and namespace == ''
+
+    - name: Set namespace var
+      set_fact:
+        namespace: "{{ _ns.stdout }}"
+      when: namespace is not defined and namespace == ''
 
     - name: Change namespace
       shell: |
-        sed -i "s/fqdn: \"sftests.com\"/fqdn: \"{{ _ns.stdout }}.sftests.com\"/g" config/samples/sf_v1_softwarefactory.yaml
+        sed -i "s/fqdn: \"sftests.com\"/fqdn: \"{{ namespace }}.sftests.com\"/g" config/samples/sf_v1_softwarefactory.yaml
       args:
         chdir: "{{ operator_dir }}"
 
@@ -42,7 +51,8 @@
 
     - name: Change storageclass
       shell: |
-        find {{ operator_dir }} -type f -exec sed -i 's/standard/manual/g' {} \;
+        find {{ operator_dir }} -type f -exec sed -i "s/standard/{{ storageclas }}/g" {} \;
+      when: storageclass != 'standard'
 
     - name: Apply custom resources
       shell: |
@@ -52,6 +62,6 @@
 
     - name: Run operator deployment
       shell: |
-        go run ./main.go --namespace {{ _ns.stdout }}
+        go run ./main.go --namespace {{ namespace }}
       args:
         chdir: "{{ operator_dir }}"
