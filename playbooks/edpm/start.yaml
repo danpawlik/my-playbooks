@@ -4,24 +4,22 @@
     pv_storageclass: local-storage
     overwrite_container_policy: true
     setup_olm: true
-    # NOTE: fixes for starting install_yamls
-    namespace: microshift
   tasks:
-        #    - name: Fail when openshift_pull_sec not provided
-        #      fail:
-        #        msg: "The openshift_pull_secret variable can not be empty!"
-        #      when: crc_secret.openshift_pull_secret == ""
+#    - name: Fail when openshift_pull_sec not provided
+#      fail:
+#        msg: "The openshift_pull_secret variable can not be empty!"
+#      when: crc_secret.openshift_pull_secret == ""
 
-        #    - name: Clone repos in the job workspace
-        #      include_role:
-        #        name: prepare-workspace
+#    - name: Clone repos in the job workspace
+#      include_role:
+#        name: prepare-workspace
 
-        #    # Fom sf-infra/roles/extra/microshift
-        #    - name: Set facts
-        #      set_fact:
-        #        openshift_pull_secret: "{{ crc_secret.openshift_pull_secret }}"
-        #      no_log: true
-        #
+#    # Fom sf-infra/roles/extra/microshift
+#    - name: Set facts
+#      set_fact:
+#        openshift_pull_secret: "{{ crc_secret.openshift_pull_secret }}"
+#      no_log: true
+#
     - name: Prepare environment
       include_tasks: pre.yaml
 
@@ -56,8 +54,8 @@
 
         - name: Configure OpenStack operator
           include_tasks: openstack.yaml
-            #      always:
-            #        - name: Remove sensitive data
-            #          include_role:
-            #            name: rdo-infra/microshift
-            #            tasks_from: cleanup.yaml
+#      always:
+#        - name: Remove sensitive data
+#          include_role:
+#            name: rdo-infra/microshift
+#            tasks_from: cleanup.yaml

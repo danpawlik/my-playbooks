@@ -32,8 +32,6 @@
     make openstack
   args:
     chdir: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}"
-  environment:
-    NAMESPACE: "{{ namespace }}"
 
 - name: Pull Required Images before subscription is removed
   when: pre_pull_images is defined and pre_pull_images
