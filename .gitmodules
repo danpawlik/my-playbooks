@@ -16,3 +16,6 @@
 [submodule "external_projects/sf-config"]
 	path = external_projects/sf-config
 	url = https://softwarefactory-project.io/r/software-factory/sf-config
+[submodule "external_projects/rdo-infra-playbooks"]
+	path = external_projects/rdo-infra-playbooks
+	url = https://review.rdoproject.org/r/rdo-infra/rdo-infra-playbooks
