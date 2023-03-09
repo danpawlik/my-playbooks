@@ -1,0 +1,20 @@
+---
+- name: Clone edpm-ansible
+  ansible.builtin.git:
+    repo: https://github.com/openstack-k8s-operators/edpm-ansible
+    dest: "{{ zuul.projects['github.com/openstack-k8s-operators/edpm-ansible'].src_dir }}"
+
+- name: Clone install_yaml
+  ansible.builtin.git:
+    repo: https://github.com/openstack-k8s-operators/install_yamls
+    dest: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}"
+
+- name: Clone openstack-ansibleee-operator
+  ansible.builtin.git:
+    repo: https://github.com/openstack-k8s-operators/openstack-ansibleee-operator
+    dest: "{{ zuul.projects['github.com/openstack-k8s-operators/openstack-ansibleee-operator'].src_dir }}"
+
+- name: Clone openstack-operator
+  ansible.builtin.git:
+    repo: https://github.com/openstack-k8s-operators/openstack-operator
+    dest: "{{ zuul.projects['github.com/openstack-k8s-operators/openstack-operator'].src_dir }}"
