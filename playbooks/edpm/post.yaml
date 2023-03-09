@@ -1,0 +1,38 @@
+---
+# https://kubernetes.io/docs/concepts/storage/storage-classes/#local
+- name: Create local-storage storage class manifest
+  copy:
+    content: |
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        name: local-storage
+      provisioner: kubernetes.io/no-provisioner
+      volumeBindingMode: WaitForFirstConsumer
+    dest: "~{{ ansible_user }}/storage-class.yaml"
+
+- name: Apply storage class manifest
+  command: oc apply -f "~{{ ansible_user }}/storage-class.yaml"
+
+- name: Execute make
+  shell: |
+    # FROM: https://logserver.rdoproject.org/26/47226/1/check/edpm-ansible-github-rdo-integration-centos-8-crc-singlenode-centos-9-external-compute/88efb0e/install_yamls.sh
+    export NAMESPACE=openstack
+    export SERVICE_REGISTRY=quay.io
+    export SERVICE_ORG=tripleozedcentos9
+    export KEYSTONEAPI_IMG=quay.io/tripleozedcentos9/openstack-keystone:current-tripleo
+    export MARIADB_DEPL_IMG=quay.io/tripleozedcentos9/openstack-mariadb:current-tripleo
+    export PLACEMENTAPI_IMG=quay.io/tripleozedcentos9/openstack-placement-api:current-tripleo
+    export GLANCEAPI_IMG=quay.io/tripleozedcentos9/openstack-glance-api:current-tripleo
+    export OVS_IMG=quay.io/skaplons/ovs:latest
+    export NEUTRONAPI_IMG=quay.io/tripleozedcentos9/openstack-neutron-api:current-tripleo
+    export OCTAVIAAPI_IMG=quay.io/tripleozedcentos9/openstack-octavia-api:current-tripleo
+    make input
+    make openstack_deploy
+    #    make openstack_prep
+    #    make openstack_deploy_prep
+    #    make all
+    #    make openstack
+    #    make openstack_deploy
+  args:
+    chdir: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}"
