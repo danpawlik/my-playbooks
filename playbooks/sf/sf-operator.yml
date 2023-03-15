@@ -56,7 +56,7 @@
 
     - name: Apply custom resources
       shell: |
-        /usr/local/bin/kubectl apply -f config/samples/
+        kubectl apply -f config/samples/
       args:
         chdir: "{{ operator_dir }}"
 

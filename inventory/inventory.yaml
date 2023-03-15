@@ -12,35 +12,29 @@ all:
           src_dir: "~{{ ansible_user }}/ansible/role-elastic-recheck"
         softwarefactory-project.io/software-factory/sf-ci:
           name: software-factory/sf-ci
-          short_name: sf-ci
           src_dir: "~{{ ansible_user }}/sf-ci"
         softwarefactory-project.io/software-factory/sf-config:
           name: software-factory/sf-config
-          short_name: sf-config
           src_dir: "~{{ ansible_user }}/sf-config"
         softwarefactory-project.io/software-factory/sfinfo:
           name: software-factory/sfinfo
-          short_name: sfinfo
           src_dir: "~{{ ansible_user }}/sfinfo"
         softwarefactory-project.io/software-factory/sf-infra:
           name: software-factory/sf-infra
-          short_name: sf-infra
           src_dir: "{{ ansible_user }}/sf-infra"
         # edpm
         github.com/openstack-k8s-operators/install_yamls:
           name: openstack-k8s-operators/install_yamls
-          short_name: install_yamls
           src_dir: "~{{ ansible_user }}/src/github.com/openstack-k8s-operators/install_yamls"
         github.com/openstack-k8s-operators/edpm-ansible:
           name: openstack-k8s-operators/edpm-ansible
-          short_name: edpm-ansible
           src_dir: "~{{ ansible_user }}/src/github.com/openstack-k8s-operators/edpm-ansible"
         github.com/openstack-k8s-operators/openstack-ansibleee-operator:
-          short_name: openstack-ansibleee-operator
-          src_dir: src/github.com/openstack-k8s-operators/openstack-ansibleee-operator
+          name: openstack-k8s-operators/openstack-ansibleee-operator
+          src_dir: "~{{ ansible_user }}/src/github.com/openstack-k8s-operators/openstack-ansibleee-operator"
         github.com/openstack-k8s-operators/openstack-operator:
-          short_name: openstack-operator
-          src_dir: src/github.com/openstack-k8s-operators/openstack-operator
+          name: openstack-k8s-operators/openstack-operator
+          src_dir: "~{{ ansible_user }}/src/github.com/openstack-k8s-operators/openstack-operator"
   hosts:
     microshift.dev:
       ansible_port: 22

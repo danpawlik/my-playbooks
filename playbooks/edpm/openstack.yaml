@@ -28,10 +28,10 @@
     {% endif %}
 
     make namespace
-    make openstack_prep
-    make openstack
   args:
     chdir: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}"
+  environment:
+    MICROSHIFT: 1
 
 - name: Pull Required Images before subscription is removed
   when: pre_pull_images is defined and pre_pull_images
@@ -65,3 +65,5 @@
 
     - name: Download required images before subscription is removed
       shell: /tmp/pull-images.sh
+      environment:
+        MICROSHIFT: 1

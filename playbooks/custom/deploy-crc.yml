@@ -91,7 +91,14 @@
         content: |
           @reboot root /usr/bin/ssh-keygen -A; systemctl start sshd
         dest: /etc/cron.d/ssh_gen
+
     - name: Set proper selinux label
       become: true
       shell: |
         /usr/bin/chcon system_u:object_r:system_cron_spool_t:s0 /etc/cron.d/ssh_gen
+
+    - name: Remove pull-secret.txt file
+      file:
+        path: pull-secret.txt
+        state: absent
+      register: _cleanup_pull_secret

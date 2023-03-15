@@ -1,38 +1,70 @@
 ---
-# https://kubernetes.io/docs/concepts/storage/storage-classes/#local
-- name: Create local-storage storage class manifest
-  copy:
-    content: |
-      apiVersion: storage.k8s.io/v1
-      kind: StorageClass
-      metadata:
-        name: local-storage
-      provisioner: kubernetes.io/no-provisioner
-      volumeBindingMode: WaitForFirstConsumer
-    dest: "~{{ ansible_user }}/storage-class.yaml"
+#  args:
+#    chdir: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}/devsetup"
+- name: Install Ansible, Make, Tar
+  become: true
+  ansible.builtin.package:
+    name:
+      - ansible-core
+      - make
+      - tar
+    state: latest
 
-- name: Apply storage class manifest
-  command: oc apply -f "~{{ ansible_user }}/storage-class.yaml"
+- name: Install devsetup dependencies
+  community.general.make:
+    chdir: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}/devsetup"
+    target: download_tools
+  environment:
+    MICROSHIFT: 1
 
-- name: Execute make
-  shell: |
-    # FROM: https://logserver.rdoproject.org/26/47226/1/check/edpm-ansible-github-rdo-integration-centos-8-crc-singlenode-centos-9-external-compute/88efb0e/install_yamls.sh
-    export NAMESPACE=openstack
-    export SERVICE_REGISTRY=quay.io
-    export SERVICE_ORG=tripleozedcentos9
-    export KEYSTONEAPI_IMG=quay.io/tripleozedcentos9/openstack-keystone:current-tripleo
-    export MARIADB_DEPL_IMG=quay.io/tripleozedcentos9/openstack-mariadb:current-tripleo
-    export PLACEMENTAPI_IMG=quay.io/tripleozedcentos9/openstack-placement-api:current-tripleo
-    export GLANCEAPI_IMG=quay.io/tripleozedcentos9/openstack-glance-api:current-tripleo
-    export OVS_IMG=quay.io/skaplons/ovs:latest
-    export NEUTRONAPI_IMG=quay.io/tripleozedcentos9/openstack-neutron-api:current-tripleo
-    export OCTAVIAAPI_IMG=quay.io/tripleozedcentos9/openstack-octavia-api:current-tripleo
-    make input
-    make openstack_deploy
-    #    make openstack_prep
-    #    make openstack_deploy_prep
-    #    make all
-    #    make openstack
-    #    make openstack_deploy
-  args:
+- name: Deploy Openstack Operators
+  community.general.make:
     chdir: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}"
+    target: openstack
+    params: &install_yamls_out
+      OUT: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}/out"
+      MICROSHIFT: 1
+  environment:
+    MICROSHIFT: 1
+
+- name: Wait for operator to get deployed
+  ansible.builtin.shell: |
+    oc get csv --no-headers=true | grep -i "succeeded"
+  register: operator_status
+  until: operator_status.rc == 0
+  retries: 20
+  delay: 5
+  environment:
+    MICROSHIFT: 1
+
+- name: Print Operator Status
+  ansible.builtin.shell: |
+    oc get csv;
+    oc get pods;
+- name: Deploy OpenStack Services
+  community.general.make:
+    chdir: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}"
+    target: openstack_deploy
+    params:
+      <<: *install_yamls_out
+      OPENSTACK_REPO: "{{ zuul.projects['github.com/openstack-k8s-operators/openstack-operator'].src_dir }}"
+  environment:
+    MICROSHIFT: 1
+
+- name: Wait for OpenStack Services to deployed
+  ansible.builtin.shell: |
+    # Cinder is disabled due to missing ceph support
+    oc get OpenStackControlPlane openstack -o json | jq -r '.status.conditions[].type';
+    oc get OpenStackControlPlane openstack -o json | \
+    jq -r '.status.conditions[] | select(.type | test("^OpenStackControlPlane(?!Cinder)")).type' | \
+    timeout 240 xargs -d '\n' -I {} sh -c 'echo testing condition={}; \
+    oc wait openstackcontrolplane.core.openstack.org/openstack --for=condition={} --timeout=-1s'
+  ignore_errors: true
+  environment:
+    MICROSHIFT: 1
+
+- name: Print Pod Status
+  ansible.builtin.shell: |
+    oc get pods;
+  environment:
+    MICROSHIFT: 1
