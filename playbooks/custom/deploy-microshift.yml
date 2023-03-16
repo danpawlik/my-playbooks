@@ -1,32 +1,39 @@
 ---
-# This playbook deploy crc and prepare VM to make a snapshot, that later
-# can be deployed in CI.
 - hosts: microshift.dev
   vars:
     fqdn: microshift.dev
-    setup_olm: false
-    use_copr_microshift: false
-  pre_tasks:
-    - name: Update packages
-      become: true
-      package:
-        name: '*'
-        state: latest
+    pv_storageclass: standard
+    pv_count:
+      start: 1
+      end: 12
+    overwrite_container_policy: true
+    setup_olm: true
+  tasks:
+    - name: Setup Microshift
+      block:
+        - name: Start Microshift deployment
+          include_role:
+            name: rdo-infra/microshift
 
-    - name: Install packages
-      become: true
-      yum:
-        name:
-          - make
-          - git
-          - vim
-          - golang
-          - tar
-          - ansible-core
-          - skopeo
-          - sqlite
-          - jq
-          - podman
-        state: present
-  roles:
-    - extra/microshift
+        # NOTE: The topolvm requires additional volume and create a lvm
+        # on that volume. We don't use that for CI, so just skip it.
+        - name: Create script to verify deployment
+          copy:
+            content: |
+              for i in {1..20}; do
+                echo "Ensuring that containers are spawned... ${i}"
+                count=$(/usr/local/bin/oc get pods --all-namespaces | grep openshift | grep -viE 'topolvm|running' -c)
+                if [ "$count" -eq "0" ]; then
+                    echo "Microshift is deployed, we can continue..."
+                    break
+                else
+                    echo "The Microshift containers are not ready..."
+                    sleep 15
+                fi
+              done
+              echo "Skipping waiting for openshift-storage - topolvm"
+            dest: /tmp/pull-images.sh
+            mode: "0755"
+
+        - name: Check if all containers are up and ready
+          shell: /tmp/pull-images.sh

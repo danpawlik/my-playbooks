@@ -26,9 +26,19 @@
       args:
         chdir: "{{ operator_dir }}"
 
+    - name: Install cert manager
+      shell: |
+        make install-cert-manager
+      args:
+        chdir: "{{ operator_dir }}"
+
     - name: Get namespace
       shell: |
-        /usr/local/bin/kubectl config view -o jsonpath='{.contexts[].context.namespace}'
+        NS=$(/usr/local/bin/kubectl config view -o jsonpath='{.contexts[].context.namespace}')
+        if [ -z "${NS}" ]; then
+            NS="default"
+        fi
+        echo "${NS}"
       register: _ns
       when: namespace is not defined and namespace == ''
 
@@ -39,29 +49,24 @@
 
     - name: Change namespace
       shell: |
-        sed -i "s/fqdn: \"sftests.com\"/fqdn: \"{{ namespace }}.sftests.com\"/g" config/samples/sf_v1_softwarefactory.yaml
+        cp config/samples/sf_v1_softwarefactory.yaml my-sf.yaml
+        sed -i "s/fqdn: \"sftests.com\"/fqdn: \"{{ namespace }}\"/g" my-sf.yaml
       args:
         chdir: "{{ operator_dir }}"
 
     - name: Enable all services
       shell: |
-        sed -i 's/false/true/g' config/samples/sf_v1_softwarefactory.yaml
+        sed -i 's/false/true/g' my-sf.yaml
       args:
         chdir: "{{ operator_dir }}"
 
     - name: Change storageclass
       shell: |
-        find {{ operator_dir }} -type f -exec sed -i "s/standard/{{ storageclas }}/g" {} \;
+        find {{ operator_dir }} -type f -exec sed -i "s/standard/{{ storageclass }}/g" {} \;
       when: storageclass != 'standard'
-
-    - name: Apply custom resources
-      shell: |
-        kubectl apply -f config/samples/
-      args:
-        chdir: "{{ operator_dir }}"
 
     - name: Run operator deployment
       shell: |
-        go run ./main.go --namespace {{ namespace }}
+        go run ./main.go --namespace {{ namespace }} --cr ./my-sf.yaml
       args:
         chdir: "{{ operator_dir }}"
