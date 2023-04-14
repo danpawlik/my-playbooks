@@ -19,3 +19,6 @@
 [submodule "external_projects/rdo-infra-playbooks"]
 	path = external_projects/rdo-infra-playbooks
 	url = https://review.rdoproject.org/r/rdo-infra/rdo-infra-playbooks
+[submodule "external_projects/ansible-microshift-role"]
+	path = external_projects/ansible-microshift-role
+	url = https://github.com/openstack-k8s-operators/ansible-microshift-role

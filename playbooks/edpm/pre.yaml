@@ -25,15 +25,3 @@
   ansible.builtin.git:
     repo: https://github.com/openstack-k8s-operators/openstack-operator
     dest: "{{ zuul.projects['github.com/openstack-k8s-operators/openstack-operator'].src_dir }}"
-
-# checkout to this PR: https://github.com/openstack-k8s-operators/install_yamls/pull/129
-- name: Checkout install_yaml
-  shell: |
-    git config --global user.email "you@example.com"
-    git config --global user.name "Your Name"
-    git remote add sean https://github.com/SeanMooney/install_yamls
-    git remote update
-    git cherry-pick -x 43e55aae26c97500829d308c1c822661c0d218ed
-  args:
-    chdir: "{{ zuul.projects['github.com/openstack-k8s-operators/install_yamls'].src_dir }}"
-  ignore_errors: true

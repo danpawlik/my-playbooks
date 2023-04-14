@@ -1,0 +1,8 @@
+---
+- name: Prepare edpm env
+  hosts: microshift.dev,kubernetes.dev,crc.dev
+  tasks:
+    - name: Clone edpm ansible
+      ansible.builtin.git:
+        repo: https://github.com/openstack-k8s-operators/edpm-ansible
+        dest: "{{ ansible_user_dir }}/src/github.com/openstack-k8s-operators/edpm-ansible"

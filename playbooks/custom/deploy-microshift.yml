@@ -2,27 +2,30 @@
 - hosts: microshift.dev
   vars:
     fqdn: microshift.dev
-    pv_storageclass: standard
+    # pv_storageclass: standard
     pv_count:
       start: 1
       end: 12
-    overwrite_container_policy: true
+    microshift_version: 4.12
+    overwrite_container_policy: false
     setup_olm: true
+    microshift_additional_addresses:
+      - "{{ fqdn }}"
+      - "sftests.com"
+      - "example.com"
   tasks:
     - name: Setup Microshift
       block:
         - name: Start Microshift deployment
           include_role:
-            name: rdo-infra/microshift
+            name: ansible-microshift-role
 
-        # NOTE: The topolvm requires additional volume and create a lvm
-        # on that volume. We don't use that for CI, so just skip it.
         - name: Create script to verify deployment
           copy:
             content: |
               for i in {1..20}; do
                 echo "Ensuring that containers are spawned... ${i}"
-                count=$(/usr/local/bin/oc get pods --all-namespaces | grep openshift | grep -viE 'topolvm|running' -c)
+                count=$(/usr/local/bin/oc get pods --all-namespaces | grep openshift | grep -viE 'running' -c)
                 if [ "$count" -eq "0" ]; then
                     echo "Microshift is deployed, we can continue..."
                     break
@@ -31,7 +34,6 @@
                     sleep 15
                 fi
               done
-              echo "Skipping waiting for openshift-storage - topolvm"
             dest: /tmp/pull-images.sh
             mode: "0755"
 
