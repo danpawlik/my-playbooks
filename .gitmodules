@@ -22,3 +22,6 @@
 [submodule "external_projects/ansible-microshift-role"]
 	path = external_projects/ansible-microshift-role
 	url = https://github.com/openstack-k8s-operators/ansible-microshift-role
+[submodule "external_projects/sf-operator"]
+	path = external_projects/sf-operator
+	url = https://github.com/softwarefactory-project/sf-operator

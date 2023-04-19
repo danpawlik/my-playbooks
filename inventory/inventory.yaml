@@ -3,6 +3,9 @@ all:
     sf_version: master
     zuul:
       branch: master
+      # temp solution
+      project:
+        src_dir: "~{{ ansible_user }}/sf-operator"
       projects:
         opendev.org/opendev/elastic-recheck:
           src_dir: "~{{ ansible_user }}/elastic-recheck"
@@ -22,6 +25,9 @@ all:
         softwarefactory-project.io/software-factory/sf-infra:
           name: software-factory/sf-infra
           src_dir: "{{ ansible_user }}/sf-infra"
+        softwarefactory-project.io/software-factory/sf-operator:
+          name: software-factory/sf-operator
+          src_dir: "{{ ansible_user }}/sf-operator"
         # edpm
         github.com/openstack-k8s-operators/install_yamls:
           name: openstack-k8s-operators/install_yamls

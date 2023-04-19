@@ -1,0 +1,92 @@
+---
+- hosts: microshift.dev
+  vars:
+    logclassify_logserver_dir: ./
+    logclassify_debug: false
+    logclassify_report: true
+    # microshift deployment
+    disk_file_sparsed: false
+    standard_user: false
+    create_pv: false
+    # post tasks artifacts directory
+    output_logs_dir: ~/zuul-output/logs
+    # my
+    fqdn: microshift.dev
+    microshift_version: 4.12
+    microshift_additional_addresses:
+      - "{{ fqdn }}"
+      - "sftests.com"
+  tasks:
+    - name: Fail when openshift_pull_sec not provided
+      fail:
+        msg: "The openshift_pull_secret variable can not be empty!"
+      when: openshift_pull_secret == ""
+
+    # Fom sf-infra/roles/extra/microshift
+    - name: Set facts
+      set_fact:
+        openshift_pull_secret: "{{ openshift_pull_secret }}"
+      no_log: true
+
+    - name: Setup Microshift
+      block:
+        - name: Start Microshift deployment
+          include_role:
+            name: ansible-microshift-role
+
+        - name: Create script to verify deployment
+          copy:
+            content: |
+              for i in {1..20}; do
+                echo "Ensuring that containers are spawned... ${i}"
+                count=$(oc get pods --all-namespaces | grep openshift | grep -vi 'running' -c)
+                if [ "$count" -eq "0" ]; then
+                    echo "Microshift is deployed, we can continue..."
+                    break
+                else
+                    echo "The Microshift containers are not ready..."
+                    sleep 15
+                fi
+              done
+            dest: /tmp/pull-images.sh
+            mode: "0755"
+
+        - name: Check if all containers are up and ready
+          shell: /tmp/pull-images.sh
+
+- hosts: microshift.dev
+  vars:
+    # from sf-operator/playbooks/group_vars/all.yaml
+    config_path: /tmp/config
+    fqdn: sftests.com
+    validate_certs: false
+    gerrit_host: "gerrit.{{ fqdn }}"
+    zuul_host: "zuul.{{ fqdn }}"
+    logserver_host: "logserver.{{ fqdn }}"
+    hosts:
+      - "{{ gerrit_host }}"
+      - "{{ zuul_host }}"
+      - "{{ logserver_host }}"
+    logserver_copy_content_dest: "/tmp/logserver-content"
+  pre_tasks:
+    - name: Check if sf-operator already exists
+      stat:
+        path: "{{ zuul.project.src_dir }}"
+      register: sf_operator_dir
+
+    - name: Clone sf-operator
+      git:
+        repo: https://github.com/softwarefactory-project/sf-operator
+        dest: "{{ zuul.project.src_dir }}"
+      when: not sf_operator_dir.stat.exists
+  roles:
+    - install-sf-operator
+    - run-sf-operator
+  tasks:
+    - include_role:
+        name: test-sf-operator
+        apply:
+          tags:
+            - test_only
+      tags:
+        - always
