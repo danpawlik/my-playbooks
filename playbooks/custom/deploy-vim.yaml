@@ -1,0 +1,56 @@
+---
+- name: deploy vim
+  hosts: all
+  vars:
+    setup_lvim: true
+  tasks:
+    - name: Install required packages
+      become: true
+      dnf:
+        name:
+          - epel-release
+          - git
+        state: present
+
+    - name: Install additional packages
+      become: true
+      dnf:
+        name:
+          - cargo
+          - "g++"
+          - neovim
+        state: present
+
+    - name: Clone dotfiles
+      ansible.builtin.git:
+        repo: "https://github.com/danpawlik/dotfiles"
+        dest: dotfiles
+
+    - name: Install ansible
+      shell: |
+        python3 -m pip install ansible-core==2.13.7
+
+    - name: Install ansible deps
+      shell: |
+        ansible-galaxy collection install community.general community.crypto ansible.posix
+
+    - name: Run ansible
+      shell: |
+        ansible-playbook ansible/playbooks/vim.yml
+      args:
+        chdir: dotfiles
+      environment:
+        ANSIBLE_PYTHON_INTERPRETER: /usr/bin/python3
+
+    - name: Setup lvim
+      when: setup_lvim
+      shell: |
+        bash <(curl -s https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh) -y
+
+    - name: Replace config
+      copy:
+        src: vim-lua/lunar-vim.lua
+        dest: .config/lvim/config.lua
+        remote_src: true
+      args:
+        chdir: dotfiles

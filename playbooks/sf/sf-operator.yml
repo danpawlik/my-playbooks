@@ -70,3 +70,9 @@
         go run ./main.go --namespace {{ namespace }} --cr ./my-sf.yaml
       args:
         chdir: "{{ operator_dir }}"
+
+    - name: Install required packages
+      shell: |
+        sudo yum install -y ansible-core git golang make jq python3-pip
+        ansible-galaxy collection install community.general community.crypto ansible.posix
+        sudo pip3 install git-review

@@ -1,41 +1,37 @@
 ---
 - hosts: microshift.dev
   vars:
-    fqdn: microshift.dev
-    # pv_storageclass: standard
-    pv_count:
-      start: 1
-      end: 12
-    microshift_version: 4.12
-    overwrite_container_policy: false
+    logclassify_logserver_dir: ./
+    logclassify_debug: false
+    logclassify_report: true
+    # microshift deployment
+    disk_file_sparsed: false
+    standard_user: false
+    create_pv: false
     setup_olm: true
+    # post tasks artifacts directory
+    output_logs_dir: ~/zuul-output/logs
+    # my
+    fqdn: microshift.dev
+    microshift_version: 4.12
     microshift_additional_addresses:
       - "{{ fqdn }}"
       - "sftests.com"
-      - "example.com"
+    disk_file_size: 30G
   tasks:
+    - name: Fail when openshift_pull_sec not provided
+      fail:
+        msg: "The openshift_pull_secret variable can not be empty!"
+      when: openshift_pull_secret == ""
+
+    # Fom sf-infra/roles/extra/microshift
+    - name: Set facts
+      set_fact:
+        openshift_pull_secret: "{{ openshift_pull_secret }}"
+      no_log: true
     - name: Setup Microshift
       block:
         - name: Start Microshift deployment
           include_role:
             name: ansible-microshift-role
 
-        - name: Create script to verify deployment
-          copy:
-            content: |
-              for i in {1..20}; do
-                echo "Ensuring that containers are spawned... ${i}"
-                count=$(/usr/local/bin/oc get pods --all-namespaces | grep openshift | grep -viE 'running' -c)
-                if [ "$count" -eq "0" ]; then
-                    echo "Microshift is deployed, we can continue..."
-                    break
-                else
-                    echo "The Microshift containers are not ready..."
-                    sleep 15
-                fi
-              done
-            dest: /tmp/pull-images.sh
-            mode: "0755"
-
-        - name: Check if all containers are up and ready
-          shell: /tmp/pull-images.sh

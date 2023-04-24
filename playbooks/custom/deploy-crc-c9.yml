@@ -5,8 +5,9 @@
   vars:
     crc_debug: true
     nested_virtualization: true
-    testing_kernel: true
+    testing_kernel: false
     prepare_sfoperator: false
+    crc_config_cluster_monitoring: false
   pre_tasks:
     - name: Update packages
       become: true
@@ -113,8 +114,8 @@
       shell: |
         /usr/bin/chcon system_u:object_r:system_cron_spool_t:s0 /etc/cron.d/ssh_gen
 
-    - name: Remove pull-secret.txt file
-      file:
-        path: pull-secret.txt
-        state: absent
-      register: _cleanup_pull_secret
+        #    - name: Remove pull-secret.txt file
+        #      file:
+        #        path: pull-secret.txt
+        #        state: absent
+        #      register: _cleanup_pull_secret
