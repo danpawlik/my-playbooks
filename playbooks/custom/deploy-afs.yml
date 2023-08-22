@@ -1,0 +1,127 @@
+---
+# Tested on Centos 7
+- hosts: afs.dev
+  vars:
+    ssl_path: /etc/pki/tls/private/
+    alt_ssl_path: /etc/pki/tls/certs
+    org_name: SoftwareFactory
+    organizational_unit_name: Test
+    ca_common_name: sftests.com
+    common_name: "gerrit.{{ ca_common_name }}"
+    common_name_alt: "{{ ca_common_name }}"
+    country_name: PL
+    state_or_province_name: Dolnoslaskie
+    locality_name: Wroclaw
+    # can not be lower than 1000
+    afs_client_cache_size: 50000
+  pre_tasks:
+
+    - name: Certs
+      become: true
+      block:
+        - name: Update packages
+          yum:
+            name: "*"
+            state: latest
+          register: _update_packages
+
+        - name: Reboot when packages updated - kernel needs to be same as kernel-headers
+          reboot:
+          when: _update_packages.changed
+
+        - name: Install epel-release
+          yum:
+            name: epel-release
+            state: present
+
+        - name: Install python2-cryptography
+          yum:
+            name: python2-cryptography
+            state: present
+
+        - name: Install required packages
+          become: true
+          package:
+            name:
+              - openssl
+                #          - python3-cryptography
+            state: present
+
+        - name: Create required directories
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+          loop:
+            - "{{ ssl_path }}"
+            - "{{ alt_ssl_path }}"
+
+        ### CA ###
+        - name: Gen CA privkey
+          openssl_privatekey:
+            path: "{{ ssl_path }}/localCA.key"
+
+        - name: Generate CA csr
+          openssl_csr:
+            path: "{{ ssl_path }}/localCA.csr"
+            privatekey_path: "{{ ssl_path }}/localCA.key"
+            country_name: "{{ country_name }}"
+            organization_name: "{{ org_name }}"
+            common_name: "{{ ca_common_name }}"
+            state_or_province_name: "{{ state_or_province_name }}"
+            locality_name: "{{ locality_name }}"
+            organizational_unit_name: "{{ organizational_unit_name }}"
+            basic_constraints:
+              - CA:TRUE
+            key_usage:
+              - cRLSign
+              - keyCertSign
+              - keyEncipherment
+              - digitalSignature
+            key_usage_critical: true
+            extended_key_usage:
+              - clientAuth
+              - serverAuth
+
+        - name: Generate selfsigned CA certificate
+          openssl_certificate:
+            path: "{{ ssl_path }}/localCA.pem"
+            csr_path: "{{ ssl_path }}/localCA.csr"
+            privatekey_path: "{{ ssl_path }}/localCA.key"
+            provider: selfsigned
+            selfsigned_digest: sha256
+
+        ### Client ###
+        - name: Gen privkey - client
+          openssl_privatekey:
+            path: "{{ ssl_path }}/localhost.key"
+
+        - name: Generate Openssl CSR - client
+          openssl_csr:
+            path: "{{ ssl_path }}/localhost.csr"
+            privatekey_path: "{{ ssl_path }}/localhost.key"
+            common_name: "{{ common_name }}"
+            country_name: "{{ country_name }}"
+            state_or_province_name: "{{ state_or_province_name }}"
+            locality_name: "{{ locality_name }}"
+            organization_name: "{{ org_name }}"
+            organizational_unit_name: "{{ organizational_unit_name }}"
+            subject_alt_name:
+              - "DNS:{{ common_name_alt }}"
+            subject_alt_name_critical: true
+
+        - name: Generate a self signed cert - client
+          openssl_certificate:
+            path: "{{ ssl_path }}/localhost.crt"
+            csr_path: "{{ ssl_path }}/localhost.csr"
+            ownca_path: "{{ ssl_path }}/localCA.pem"
+            ownca_privatekey_path: "{{ ssl_path }}/localCA.key"
+            provider: ownca
+
+        - name: Copy all content frol ssl path to alt_ssl_path
+          ansible.builtin.copy:
+            src: "{{ ssl_path }}"
+            dest: "{{ alt_ssl_path }}"
+            remote_src: true
+  roles:
+    - rdo/afs-mirror
+    - rdo/afs-monitoring
