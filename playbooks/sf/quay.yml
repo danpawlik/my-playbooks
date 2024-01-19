@@ -1,4 +1,23 @@
 ---
+# WARNING: Bootstrap Quay by using playbook: https://github.com/danpawlik/my-playbooks/blob/master/playbooks/sf/quay.yml
+# After setup, create project as `sf` user (password is in /var/data/quay/config/sf_token):
+#  * config_sf
+# Then inside the `config_sf` create application:
+#  * admin_token
+# with privileges:
+#  * "Administer Organization",
+#  * "Administer Repositories",
+#  * "Create Repositories",
+#  * "View all visible repositories",
+#  * "Read/Write to any accessible repositories",
+#  * "Administer User" permissions.
+#
+#  NOTE: if you have problems in your dev deployment on getting the
+#  token because of the HSTS, change the hostname address (from quay.dev) to ip address.
+#
+# Same steps for tripleo user (password is in: /var/data/quay/config/tripleo_token).
+# After getting a token, add value into the "quay_users" ansible var below and re-run playbook https://github.com/danpawlik/my-playbooks/blob/master/playbooks/sf/quay.yml
+# (because you need to create admin_token and provide it in playbook).
 - hosts: quay.dev
   vars:
     enable_clair: true
@@ -13,21 +32,31 @@
       admin:
         email: admin@quay.dev
         password: password
+      # Provide token after bootstrap via creating "new application" with proper privileges.
+      # More info: https://www.softwarefactory-project.io/deploying-the-quay-container-registry.html
       sf:
         email: sf@quay.dev
         password: password
+        # token: ''
+        token: 'ddDQiIlVaeV9ZLOXpgPHgVBQgOjHb4ljakV7jrht'
+      tripleo:
+        email: tripleo@quay.dev
+        password: password
+        #token: ''
+        token: WfoXbwAS0izIdgaeW6VwHKUJE2UPXePtrE4m8bdB
     database_secret_key: 12995dde-5a37-53a1-ab79-123dfa2bc701
     secret_key: 123632d-c0a6-56ac-be90-12347d283d12
     postgresql_additional_parameters: "-c shared_buffers=256MB -c max_connections=2000"
     container_images:
-      quay: quay.io/projectquay/quay:v3.7.10
-      postgresql: quay.io/software-factory/postgres:13.5-alpine3.14
-      clair: quay.io/projectquay/clair:4.3.5
-      redis: quay.io/software-factory/redis:6.2.4
+      postgresql: quay.io/software-factory/postgres:13.12-alpine3.18
+      redis: quay.io/software-factory/redis:7.2.0-alpine3.18
+      quay: quay.io/projectquay/quay:v3.10.0
+      clair: quay.io/projectquay/clair:4.7.2
     quay_enable_prune: true
     quay_api_url: https://quay.dev/api/v1
     quay_insecure: true
     quay_organizations:
+      # pruner
       tripleo:
         - name: tripleomastercentos9
           token: ""
@@ -77,9 +106,9 @@
   tasks:
     - name: Setup quay
       include_role:
-        name: quay
+        name: rdo/quay
         tasks_from: main.yml
     - name: Create organizations
       include_role:
-        name: quay-project-creation
+        name: rdo/quay-project-creation
         tasks_from: main.yml

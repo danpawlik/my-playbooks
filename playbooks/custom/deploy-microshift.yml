@@ -1,23 +1,33 @@
 ---
 - hosts: microshift.dev
   vars:
+
+    etcd_on_ramdisk: false
+    microshift_version: 4.13
+
+    disk_file_size: 50G
+    #jobs
     logclassify_logserver_dir: ./
     logclassify_debug: false
     logclassify_report: true
     # microshift deployment
-    disk_file_sparsed: false
+    disk_file_sparsed: true
     standard_user: false
     create_pv: false
     setup_olm: true
     # post tasks artifacts directory
     output_logs_dir: ~/zuul-output/logs
-    # my
-    fqdn: microshift.dev
-    microshift_version: 4.12
+    # dnsmasq
     microshift_additional_addresses:
-      - "{{ fqdn }}"
       - "sftests.com"
-    disk_file_size: 30G
+      - "microshift.dev"
+      - "sfop.me"
+#    microshift_config:
+#      network:
+#        serviceNodePortRange: 19000-30000
+#    microshift_lmvd: {}
+#    microshift_ovn:
+#      mtu: 1300
   tasks:
     - name: Fail when openshift_pull_sec not provided
       fail:
@@ -34,4 +44,3 @@
         - name: Start Microshift deployment
           include_role:
             name: ansible-microshift-role
-

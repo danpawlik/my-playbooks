@@ -2,6 +2,9 @@
 - name: Deploy Prometheus with Grafana
   hosts: monitoring.dev
   vars:
+    sf_grafana:
+      password: admin
+      user: admin
     password: admin
     user: admin
     prometheus_public_url: http://monitoring.dev:9090

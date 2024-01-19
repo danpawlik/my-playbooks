@@ -1,7 +1,7 @@
 ---
 # This playbook deploy crc and prepare VM to make a snapshot, that later
 # can be deployed in CI.
-- hosts: crc.dev
+- hosts: osn.dev
   vars:
     crc_debug: true
   pre_tasks:

@@ -5,6 +5,11 @@
   vars:
     crc_debug: true
     nested_virtualization: true
+    prepare_sfoperator: false
+    crc_config_cluster_monitoring: false
+    disable_selinux: false
+    crc_parameters: "--memory 14336 --disk-size 40 --cpus 6"
+    crc_version: 2.19.0
   pre_tasks:
     - name: Update packages
       become: true
@@ -17,6 +22,7 @@
       selinux:
         policy: targeted
         state: permissive
+      when: disable_selinux
 
     - name: Enable nested virtualization
       block:
@@ -97,8 +103,6 @@
       shell: |
         /usr/bin/chcon system_u:object_r:system_cron_spool_t:s0 /etc/cron.d/ssh_gen
 
-        #    - name: Remove pull-secret.txt file
-        #      file:
-        #        path: pull-secret.txt
-        #        state: absent
-        #      register: _cleanup_pull_secret
+    - name: Remove ssh key
+      shell: |
+        sed -i '/5KeZU8VwRAggeOxqQJeoqp3/d' ~/.ssh/authorized_keys

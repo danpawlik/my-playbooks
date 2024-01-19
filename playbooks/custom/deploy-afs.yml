@@ -1,6 +1,5 @@
 ---
-# Tested on Centos 7
-- hosts: afs.dev
+- hosts: mirror.dev
   vars:
     ssl_path: /etc/pki/tls/private/
     alt_ssl_path: /etc/pki/tls/certs

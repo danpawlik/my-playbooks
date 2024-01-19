@@ -3,9 +3,6 @@ all:
     sf_version: master
     zuul:
       branch: master
-      # temp solution
-      project:
-        src_dir: "~{{ ansible_user }}/sf-operator"
       projects:
         opendev.org/opendev/elastic-recheck:
           src_dir: "~{{ ansible_user }}/elastic-recheck"
@@ -44,5 +41,13 @@ all:
   hosts:
     microshift.dev:
       ansible_port: 22
-      ansible_host: 192.168.122.202
+      ansible_host: 192.168.120.202
+      ansible_user: centos
+    crc.dev:
+      ansible_port: 22
+      ansible_host: 192.168.120.201
+      ansible_user: centos
+    opensearch.dev:
+      ansible_port: 22
+      ansible_host: 192.168.122.200
       ansible_user: centos
