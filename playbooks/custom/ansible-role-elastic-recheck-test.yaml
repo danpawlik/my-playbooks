@@ -1,0 +1,90 @@
+---
+- hosts: opensearch.sftests.com
+  become: true
+  vars:
+    zuul:
+      projects:
+        opendev.org/openstack/ci-log-processing:
+          src_dir: /root/ci-log-processing
+        softwarefactory-project.io/software-factory/ansible-role-elastic-recheck:
+          src_dir: /root/ansible-role-elastic-recheck
+  tasks:
+    - name: Update hosts
+      become: true
+      ansible.builtin.package:
+        name: '*'
+        state: latest
+
+    - name: Install rsync package
+      become: true
+      package:
+        name:
+          - rsync
+          - git
+          - ansible-core
+          - podman
+          - epel-release
+        state: present
+
+    - name: Install rsync package
+      become: true
+      package:
+        name:
+          - python3-psycopg2
+          - python3-passlib+bcrypt
+        state: present
+
+    - name: Clone required projects
+      git:
+        repo: https://opendev.org/openstack/ci-log-processing
+        dest: "{{ zuul.projects['opendev.org/openstack/ci-log-processing'].src_dir }}"
+        clone: true
+        update: false
+
+    - name: Synchronize required projects
+      synchronize:
+        src: "{{ playbook_dir }}/../../external_projects/ansible-role-elastic-recheck/"
+        dest: "/root/ansible-role-elastic-recheck/"
+        recursive: true
+        archive: true
+
+    - name: Create symlink to the role
+      ansible.builtin.file:
+        src: "{{ zuul.projects['opendev.org/openstack/ci-log-processing'].src_dir }}/ansible/roles/{{ item }}"
+        dest: "/root/ansible-role-elastic-recheck/roles/{{ item }}"
+        state: link
+      loop:
+       - check-services
+       - logscraper
+       - logsender
+
+    - name: Copy key to authorized
+      ansible.builtin.shell: |
+        cat /root/.ssh/id_ed25519.pub >> /root/.ssh/authorized_keys
+
+    - name: Create inventory file
+      ansible.builtin.copy:
+        content: |
+          ---
+          all:
+            hosts:
+              opensearch.sftests.com:
+                ansible_port: 22
+                ansible_host: {{ ansible_default_ipv4.address }}
+                ansible_user: root
+            vars:
+              zuul:
+                projects:
+                  opendev.org/openstack/ci-log-processing:
+                    src_dir: "{{ zuul.projects['opendev.org/openstack/ci-log-processing'].src_dir }}"
+                  softwarefactory-project.io/software-factory/ansible-role-elastic-recheck:
+                    src_dir: /root/ansible-role-elastic-recheck
+        dest: /root/inventory.yaml
+
+    - name: Install galaxy deps
+      ansible.builtin.shell: |
+        ansible-galaxy collection install --force-with-deps community.crypto ansible.posix
+
+    - name: Run Ansible
+      ansible.builtin.shell: |
+        ansible-playbook  -e "ansible_host_key_checking=False" -i /root/inventory.yaml /root/ansible-role-elastic-recheck/test-playbooks/check-services.yml &> ansible.log
