@@ -1,30 +1,46 @@
 ---
 - name: Disable selinux
-  include_tasks: selinux.yaml
+  ansible.builtin.include_tasks: selinux.yaml
 
 - name: Prepare host
-  include_tasks: pre.yaml
+  ansible.builtin.include_tasks: pre.yaml
 
 - name: Prepare cri-o
-  include_tasks: crio.yaml
+  ansible.builtin.include_tasks: crio.yaml
 
 - name: Set firewall rules
-  include_tasks: firewall.yaml
+  ansible.builtin.include_tasks: firewall.yaml
 
 - name: Configure repos and install required packages
-  include_tasks: setup_kubeadm.yaml
+  ansible.builtin.include_tasks: setup_kubeadm.yaml
 
 - name: Setup Kubernetes
-  include_tasks: kubeadm.yaml
+  ansible.builtin.include_tasks: kubeadm.yaml
 
-- name: Setup Calico
-  include_tasks: calico.yaml
+- name: Untaint node
+  ansible.builtin.include_tasks: untaint.yaml
+
+- name: Setup flannel
+  ansible.builtin.include_tasks: flannel.yaml
+
+- name: Setup helm - required for topolvm
+  ansible.builtin.include_tasks: helm.yaml
+
+- name: Create volume group
+  ansible.builtin.include_tasks: lvm.yaml
+
+- name: Deploy certmanager
+  ansible.builtin.include_tasks: certmanager.yaml
+
+- name: Deploy topolvm
+  ansible.builtin.include_tasks: topolvm.yaml
 
 - name: Setup ingress
-  include_tasks: ingress.yaml
+  ansible.builtin.include_tasks: ingress.yaml
 
-- name: Post configuration
-  include_tasks: post.yaml
+- name: Deploy MetalLB
+  ansible.builtin.include_tasks: metallb.yaml
+  when: use_loadbalancer
 
-- name: Local path provisioner
-  include_tasks: local-storage.yaml
+- name: Post tasks
+  ansible.builtin.include_tasks: post.yaml
