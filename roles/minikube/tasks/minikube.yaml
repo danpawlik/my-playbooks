@@ -1,0 +1,28 @@
+---
+- name: Get minikube binary
+  become: true
+  ansible.builtin.get_url:
+    url: https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+    dest: /usr/bin/minikube
+    mode: "0755"
+
+- name: Start Minikube
+  ansible.builtin.shell: >
+    minikube start
+    --v=7
+    --preload=false
+    --container-runtime=cri-o
+    --addons=ingress
+    --addons=ingress-dns
+    --addons=dns
+    --addons=storage
+    --addons=olm
+    --network-plugin=cni
+    --cpus {{ cpus_count | default(ansible_processor_vcpus) }}
+    --memory {{ (memory_amount | default(ansible_memory_mb['real']['total']) - 2000) }}
+  register: _minikube_setup
+
+- name: Write setup log to file
+  ansible.builtin.copy:
+    content: "{{ _minikube_setup.stdout }}"
+    dest: minikube-setup.log

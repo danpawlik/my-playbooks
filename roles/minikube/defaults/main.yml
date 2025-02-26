@@ -1,0 +1,11 @@
+---
+fqdn: minikube.dev
+crio_version: 1.32
+kubernetes_version: "v1.32.0"
+cert_manager_version: 1.16.3
+
+disk_file_path: /mnt/storage-file
+disk_file_size: 20G
+disk_file_sparsed: false
+vg_name: myvg1
+vg_create: true
