@@ -20,6 +20,7 @@
     --network-plugin=cni
     --cpus {{ cpus_count | default(ansible_processor_vcpus) }}
     --memory {{ (memory_amount | default(ansible_memory_mb['real']['total']) - 2000) }}
+    {{ ramdisk_command | default('') }}
   register: _minikube_setup
 
 - name: Write setup log to file

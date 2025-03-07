@@ -2,6 +2,10 @@
 - name: Prepare host
   ansible.builtin.include_tasks: pre.yaml
 
+- name: Configure etcd on ramdisk
+  ansible.builtin.include_tasks: ramdisk.yaml
+  when: etcd_on_ramdisk
+
 - name: Prepare cri-o
   ansible.builtin.include_tasks: crio.yaml
 

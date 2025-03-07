@@ -9,3 +9,7 @@ disk_file_size: 20G
 disk_file_sparsed: false
 vg_name: myvg1
 vg_create: true
+
+etcd_on_ramdisk: false
+ramdisk_path: /mnt/ramdisk
+ramdisk_size: 512m
