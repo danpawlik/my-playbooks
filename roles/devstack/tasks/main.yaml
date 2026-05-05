@@ -1,0 +1,6 @@
+---
+- name: Install required packages
+  ansible.builtin.include_tasks: pre.yaml
+
+- name: Run devstack
+  ansible.builtin.include_tasks: run.yaml

@@ -1,0 +1,13 @@
+---
+basic_packages:
+  - sudo
+  - git
+  - vim
+
+devstack_user: stack
+devstack_branch: master
+
+# localrc
+devstack_admin_password: admin1234admin
+telemetry_services: false
+telemetry_prometheus_services: false

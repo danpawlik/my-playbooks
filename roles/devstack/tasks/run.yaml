@@ -1,0 +1,17 @@
+---
+- name: Create localrc
+  become: true
+  ansible.builtin.template:
+    src: localrc.j2
+    dest: /opt/stack/devstack/local.conf
+    owner: "{{ devstack_user }}"
+    group: "{{ devstack_user }}"
+
+- name: Run devstack
+  become: true
+  become_user: stack
+  ansible.builtin.shell: |
+    ./stack.sh &> ../stack.log
+  args:
+    chdir: /opt/stack/devstack
+    executable: /bin/bash

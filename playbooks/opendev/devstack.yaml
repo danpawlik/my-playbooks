@@ -1,0 +1,10 @@
+---
+- name: Run devstack
+  hosts: devstack.dev
+  vars:
+    telemetry_services: true
+    telemetry_prometheus_services: true
+  tasks:
+    - name: Run devstack
+      ansible.builtin.include_role:
+        name: devstack

@@ -1,0 +1,44 @@
+[[local|localrc]]
+FLOATING_RANGE=192.168.1.224/27
+FIXED_RANGE=10.11.12.0/24
+
+ADMIN_PASSWORD={{ devstack_admin_password }}
+DATABASE_PASSWORD=$ADMIN_PASSWORD
+RABBIT_PASSWORD=$ADMIN_PASSWORD
+SERVICE_PASSWORD=$ADMIN_PASSWORD
+
+# enable horizon as default
+enable_service horizon
+
+{% if telemetry_services %}
+enable_plugin aodh https://opendev.org/openstack/aodh
+enable_plugin ceilometer https://opendev.org/openstack/ceilometer
+enable_plugin cloudkitty https://opendev.org/openstack/cloudkitty
+{% endif %}
+
+{% if telemetry_prometheus_services %}
+CEILOMETER_BACKEND=sg-core
+CEILOMETER_PIPELINE_INTERVAL=15
+CEILOMETER_ALARM_THRESHOLD=6000000000
+PROMETHEUS_CUSTOM_SCRAPE_TARGETS="localhost:3000"
+SG_CORE_CONFIGURE_OBSERVABILITYCLIENT="False"
+
+CLOUDKITTY_FETCHER="keystone"
+CLOUDKITTY_LOKI_URL="http://127.0.0.1:3100"
+CLOUDKITTY_STORAGE_BACKEND="loki"
+
+enable_plugin aetos https://opendev.org/openstack/aetos
+enable_plugin cloudkitty-tempest-plugin https://opendev.org/openstack/cloudkitty-tempest-plugin
+enable_plugin heat https://opendev.org/openstack/heat
+enable_plugin sg-core https://github.com/openstack-k8s-operators/sg-core main
+enable_plugin devstack-plugin-prometheus https://opendev.org/openstack/devstack-plugin-prometheus
+
+enable_service ck-api
+enable_service ck-proc
+
+LIBS_FROM_GIT=aetos,aodh,ceilometer,cinder,devstack,devstack-gate,dib-utils,diskimage-builder,glance,heat,keystone,neutron,nova,placement,requirements,swift,python-observabilityclient,cloudkitty,cloudkitty-tempest-plugin,python-cloudkittyclient
+{% endif %}
+
+
+INSTALL_TEMPEST=True
+VERBOSE="True"

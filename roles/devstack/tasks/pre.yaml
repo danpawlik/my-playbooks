@@ -1,0 +1,32 @@
+---
+- name: Install required packages
+  become: true
+  ansible.builtin.package:
+    name: "{{ basic_packages }}"
+    state: present
+
+- name: Create user
+  become: true
+  ansible.builtin.user:
+    home: /opt/stack
+    create_home: true
+    name: "{{ devstack_user }}"
+    state: present
+    shell: /bin/bash
+
+- name: Add user to sudoers with NOPASSWD
+  become: true
+  ansible.builtin.lineinfile:
+    path: "/etc/sudoers.d/{{ devstack_user }}"
+    create: true
+    mode: "0440"
+    line: "{{ devstack_user }} ALL=(ALL) NOPASSWD:ALL"
+    validate: "visudo -cf %s"
+
+- name: Clone devstack repo
+  become: true
+  become_user: stack
+  ansible.builtin.git:
+    repo: https://opendev.org/openstack/devstack
+    dest: /opt/stack/devstack
+    version: "{{ devstack_branch }}"
