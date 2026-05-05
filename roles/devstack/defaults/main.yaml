@@ -3,6 +3,7 @@ basic_packages:
   - sudo
   - git
   - vim
+  - acl
 
 devstack_user: stack
 devstack_branch: master

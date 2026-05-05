@@ -7,11 +7,24 @@
     owner: "{{ devstack_user }}"
     group: "{{ devstack_user }}"
 
+# Use become_user (not sudo -u …) so privilege escalation follows ansible.cfg
+# (NOPASSWD, etc.) and you never block on an invisible sudo password prompt.
+#
+# async/poll lets very long installs complete without the default Ansible job
+# timeout and helps keep SSH sessions from looking “idle forever” on strict
+# firewalls (polling produces periodic traffic).
+
 - name: Run devstack
   become: true
-  become_user: stack
-  ansible.builtin.shell: |
-    ./stack.sh &> ../stack.log
-  args:
+  become_user: "{{ devstack_user }}"
+  ansible.builtin.shell:
+    cmd: >
+      ./stack.sh > /opt/stack/stack.log 2>&1
     chdir: /opt/stack/devstack
     executable: /bin/bash
+  environment:
+    HOME: "/opt/stack"
+    USER: "{{ devstack_user }}"
+    PATH: "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin"
+  async: 3600
+  poll: 30
