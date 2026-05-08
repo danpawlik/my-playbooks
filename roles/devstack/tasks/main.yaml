@@ -4,3 +4,9 @@
 
 - name: Run devstack
   ansible.builtin.include_tasks: run.yaml
+
+- name: Generate clouds.yaml from openrc
+  ansible.builtin.include_tasks: openrc.yaml
+
+- name: Post actions
+  ansible.builtin.include_tasks: post.yaml

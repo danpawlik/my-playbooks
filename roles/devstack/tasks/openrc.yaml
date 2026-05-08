@@ -1,0 +1,26 @@
+---
+- name: Create openstack config directory
+  become: true
+  ansible.builtin.file:
+    path: /opt/stack/.config/openstack
+    state: directory
+    owner: "{{ devstack_user }}"
+    group: "{{ devstack_user }}"
+
+- name: Copy script for generating clouds.yaml
+  ansible.builtin.copy:
+    src: gen-clouds-yaml.sh
+    dest: /tmp/gen-clouds-yaml.sh
+    mode: "0755"
+
+- name: Read openrc and generate clouds.yaml
+  become: true
+  ansible.builtin.command: /tmp/gen-clouds-yaml.sh
+
+- name: Set ownership for clouds.yaml
+  become: true
+  ansible.builtin.file:
+    path: /opt/stack/.config/openstack/clouds.yaml
+    state: file
+    owner: "{{ devstack_user }}"
+    group: "{{ devstack_user }}"
