@@ -1,1 +1,22 @@
 ---
+- name: Configure own vim
+  when: configure_vim
+  block:
+    - name: Clone dotfiles repo
+      ansible.builtin.git:
+        repo: 'https://github.com/danpawlik/dotfiles'
+        dest: /tmp/dotfiles
+
+    - name: Install ansible if not available
+      become: true
+      ansible.builtin.package:
+        name: ansible
+        state: present
+
+    - name: Execute nested ansible that configure vim
+      ansible.builtin.shell: >
+        ansible-playbook
+        -e nvim_minimal=true
+        ansible/playbooks/vim.yml
+      args:
+        chdir: /tmp/dotfiles

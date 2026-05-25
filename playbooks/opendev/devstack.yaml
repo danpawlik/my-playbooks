@@ -2,8 +2,11 @@
 - name: Run devstack
   hosts: devstack.dev
   vars:
+    ansible_ssh_pipelining: true
     telemetry_services: true
     telemetry_prometheus_services: true
+    # temporary
+    # enable_ceph: true
   tasks:
     - name: Run devstack
       ansible.builtin.include_role:
