@@ -4,6 +4,7 @@ basic_packages:
   - git
   - vim
   - acl
+  - uuid-runtime
 
 devstack_user: stack
 devstack_branch: master
@@ -12,3 +13,4 @@ devstack_branch: master
 devstack_admin_password: admin1234admin
 telemetry_services: false
 telemetry_prometheus_services: false
+enable_ceph: false

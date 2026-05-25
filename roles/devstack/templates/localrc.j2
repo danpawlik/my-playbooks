@@ -39,6 +39,15 @@ enable_service ck-proc
 LIBS_FROM_GIT=aetos,aodh,ceilometer,cinder,devstack,devstack-gate,dib-utils,diskimage-builder,glance,heat,keystone,neutron,nova,placement,requirements,swift,python-observabilityclient,cloudkitty,cloudkitty-tempest-plugin,python-cloudkittyclient
 {% endif %}
 
+{% if enable_ceph %}
+# enable_plugin devstack-plugin-ceph https://opendev.org/openstack/devstack-plugin-ceph
+# ENABLE_CEPH_RGW=True
+# disable_service s-proxy s-object s-container s-account
+
+enable_plugin devstack-plugin-ceph https://github.com/danpawlik/devstack-plugin-ceph
+ENABLE_CEPH_RGW=True
+disable_service s-proxy s-object s-container s-account
+{% endif %}
 
 INSTALL_TEMPEST=True
 VERBOSE="True"
