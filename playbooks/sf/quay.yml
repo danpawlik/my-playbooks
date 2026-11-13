@@ -1,8 +1,16 @@
 ---
 # WARNING: Bootstrap Quay by using playbook: https://github.com/danpawlik/my-playbooks/blob/master/playbooks/sf/quay.yml
-# After setup, create project as `sf` user (password is in /var/data/quay/config/sf_token):
+#
+# ## Quick way, do not run on production
+# NOTE: if you are lazy, you can use ADMIN_TOKEN for quay_users (token param) available in
+#   /var/data/quay/config/admin_token
+# for test purposes instead of creating organization, apps, set permissions and gen tokens.
+#
+# ## Proper way
+# Login as `sf` user - password is in /var/data/quay/config/sf_token
+# After setup, create project as `sf` user (create new organization)
 #  * config_sf
-# Then inside the `config_sf` create application:
+# Then inside the `config_sf` organization, create application => https://quay.dev/organization/config_sf?tab=applications:
 #  * admin_token
 # with privileges:
 #  * "Administer Organization",
@@ -20,6 +28,7 @@
 # (because you need to create admin_token and provide it in playbook).
 - hosts: quay.dev
   vars:
+    hide_sensitive_logs: false
     enable_clair: true
     enable_mirror: true
     fqdn: quay.dev
@@ -28,29 +37,44 @@
     quay_validate_cert: false
     # will be removed soon
     quay_admin_password: password
+####### BOOTSTRAP ########
+####### UNCOMMENT WHEN YOU DO BOOTSTRAP. COMMENT LATER SECTION #######
     quay_users:
       admin:
         email: admin@quay.dev
-        password: password
-      # Provide token after bootstrap via creating "new application" with proper privileges.
-      # More info: https://www.softwarefactory-project.io/deploying-the-quay-container-registry.html
+        password: password1234
       sf:
         email: sf@quay.dev
-        password: password
-        # token: ''
-        token: 'ddDQiIlVaeV9ZLOXpgPHgVBQgOjHb4ljakV7jrht'
+        password: password1234
+        token: ''
       tripleo:
         email: tripleo@quay.dev
-        password: password
-        #token: ''
-        token: WfoXbwAS0izIdgaeW6VwHKUJE2UPXePtrE4m8bdB
+        password: password1234
+        token: ''
+########################
+###### UNCOMMENT AFTER BOOTSTRAP ##############
+#    quay_users:
+#      admin:
+#        email: admin@quay.dev
+#        password: password
+#      # Provide token after bootstrap via creating "new application" with proper privileges.
+#      # More info: https://www.softwarefactory-project.io/deploying-the-quay-container-registry.html
+#      sf:
+#        email: sf@quay.dev
+#        password: password
+#        token: 'GENERATED TOKEN FROM config_sf organization, admin_token app'
+#      tripleo:
+#        email: tripleo@quay.dev
+#        password: password
+#        token: 'GENERATED TOKEN FROM config_tripleo organization, admin_token app'
+########################
     database_secret_key: 12995dde-5a37-53a1-ab79-123dfa2bc701
     secret_key: 123632d-c0a6-56ac-be90-12347d283d12
     postgresql_additional_parameters: "-c shared_buffers=256MB -c max_connections=2000"
     container_images:
       postgresql: quay.io/software-factory/postgres:13.12-alpine3.18
       redis: quay.io/software-factory/redis:7.2.0-alpine3.18
-      quay: quay.io/projectquay/quay:v3.10.0
+      quay: quay.io/projectquay/quay:v3.10-unstable
       clair: quay.io/projectquay/clair:4.7.2
     quay_enable_prune: true
     quay_api_url: https://quay.dev/api/v1
