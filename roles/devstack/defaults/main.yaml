@@ -2,6 +2,7 @@
 basic_packages:
   - sudo
   - git
+  - iptables
   - vim
   - acl
   - uuid-runtime
@@ -14,5 +15,6 @@ devstack_admin_password: admin1234admin
 telemetry_services: false
 telemetry_prometheus_services: false
 enable_ceph: false
+neutron_features: false
 
 configure_vim: true

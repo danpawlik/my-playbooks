@@ -49,5 +49,17 @@ ENABLE_CEPH_RGW=True
 disable_service s-proxy s-object s-container s-account
 {% endif %}
 
+{% if neutron_features %}
+# VPNaaS (network.services.vpn, network.services.vpn.connections)
+enable_plugin neutron-vpnaas https://opendev.org/openstack/neutron-vpnaas
+enable_service q-ovn-vpn-agent
+
+# FWaaS v2 (network.services.firewall, network.services.firewall.policy)
+enable_plugin neutron-fwaas https://opendev.org/openstack/neutron-fwaas
+enable_service q-fwaas-v2
+
+enable_service q-metering
+{% endif %}
+
 INSTALL_TEMPEST=True
 VERBOSE="True"

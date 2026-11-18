@@ -39,3 +39,25 @@
     repo: https://opendev.org/openstack/devstack
     dest: /opt/stack/devstack
     version: "{{ devstack_branch }}"
+
+- name: Ensure .ssh directory exists
+  become: true
+  ansible.builtin.file:
+    path: "/opt/{{ devstack_user }}/.ssh"
+    state: directory
+    mode: "0700"
+    owner: "{{ devstack_user }}"
+    group: "{{ devstack_user }}"
+
+- name: Read ubuntu authorized_keys
+  become: true
+  ansible.builtin.slurp:
+    src: /home/ubuntu/.ssh/authorized_keys
+  register: _ubuntu_authorized_keys
+
+- name: Ensure those keys exist for the target user
+  become: true
+  ansible.posix.authorized_key:
+    user: "{{ devstack_user }}"
+    state: present
+    key: "{{ _ubuntu_authorized_keys.content | b64decode }}"
